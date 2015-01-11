@@ -1,0 +1,6 @@
+[submodule "submodules/Yaml"]
+	path = submodules/Yaml
+	url = git@github.com:symfony/Yaml.git
+[submodule "submodules/phool"]
+	path = submodules/phool
+	url = git@github.com:flaupretre/phool.git
