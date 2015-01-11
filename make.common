@@ -1,0 +1,55 @@
+#-----------------------------------------------------------------------------
+# Non Configurable parameters
+
+PRODUCT=php-ext-gen
+
+SOFTWARE_VERSION = 0.0.1
+
+SOFTWARE_RELEASE = 1
+
+#--------------
+
+PHPCMD = $(VALGRIND) $(PHP)
+
+PHKMGR = $(PHPCMD) $(PHKMGR_PATH)
+
+PHK_BUILD = $(PHKMGR) build
+
+EXPAND = SOFTWARE_VERSION=$(SOFTWARE_VERSION) SOFTWARE_RELEASE=$(SOFTWARE_RELEASE) $(SHELL) $(BUILD_DIR)/expand.sh
+
+XREF = $(SHELL) $(BUILD_DIR)/xref.sh
+
+MK_DISTRIB = $(SHELL) $(BUILD_DIR)/mk_distrib.sh
+
+DISTRIB=$(PRODUCT)-$(SOFTWARE_VERSION)-$(SOFTWARE_RELEASE).tgz
+
+#-----------------------------------------------------------------------------
+# Common rules
+
+#-- Default target
+
+base: $(TARGETS)
+
+.PHONY: base clean_base exe
+
+#--- Cleanup targets and extra
+
+clean_base:
+	@if [ -n "$(SUBDIRS)" ] ; then for i in $(SUBDIRS) ;	do $(MAKE) -C $$i clean ; done ; fi
+	/bin/rm -rf $(TARGETS) $(EXTRA_CLEAN)
+
+#--- How to expand a PSF (replace vars)
+
+%.psf: %.psf.in
+	$(EXPAND) <$< >$@
+
+#--- How to transform the package into a shell executable
+
+exe: $(PRODUCT)
+
+$(PRODUCT): $(PRODUCT).phk
+	cp $(PRODUCT).phk $(PRODUCT)
+	chmod +x $(PRODUCT)
+	$(PHPCMD) $(PRODUCT) @set_interp '/bin/env php'
+
+#-----------------------------------------------------------------------------

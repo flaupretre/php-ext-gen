@@ -1,0 +1,17 @@
+
+add --directory src -s  .
+
+#---------------------------------------------------------------------
+%options
+
+name           : php-ext-gen
+summary        : PHP extension generator
+version        : '@SOFTWARE_VERSION@'
+release        : '@SOFTWARE_RELEASE@'
+license        : To be defined
+copyright      : (c) F. Laupretre
+author         : F. Laupretre <mailto:phk@tekwire.net>
+url            : https://github.com/flaupretre/php-ext-gen
+packager       : F. Laupretre <mailto:phk@tekwire.net>
+cli_run_script : /scripts/main.php
+#license_prefix : /etc/license
