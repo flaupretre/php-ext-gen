@@ -36,7 +36,7 @@ base: $(TARGETS)
 
 clean_base:
 	@if [ -n "$(SUBDIRS)" ] ; then for i in $(SUBDIRS) ;	do $(MAKE) -C $$i clean ; done ; fi
-	/bin/rm -rf $(TARGETS) $(EXTRA_CLEAN)
+	@[ "x$(TARGETS)$(EXTRA_CLEAN)" = x ] || /bin/rm -rf $(TARGETS) $(EXTRA_CLEAN)
 
 #--- How to expand a PSF (replace vars)
 

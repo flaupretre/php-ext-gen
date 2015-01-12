@@ -1,5 +1,16 @@
 
-add --directory src -s  .
+add -C src  .
+
+#-- External libraries
+
+# Phool
+
+add -t submodules/phool -C submodules/phool/src .
+
+# Yaml
+
+add -b submodules/Yaml -C submodules/Yaml Exception Dumper.php Escaper.php \
+	Inline.php Parser.php Unescaper.php Yaml.php
 
 #---------------------------------------------------------------------
 %options
