@@ -1,7 +1,7 @@
 #
 #==============================================================================
 
-SUBDIRS = newt
+SUBDIRS = newt dummy1
 
 include ../make.vars
 include ../make.common

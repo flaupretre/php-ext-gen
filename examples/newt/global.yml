@@ -1,0 +1,26 @@
+# newt extension main definition file
+
+macros:
+  required: &required
+    need: required
+  const: &standard-int-const
+    type: int
+    computed:   use-name
+
+#---------
+
+name: newt
+
+autoconf:
+#TODO
+
+functions:
+  - newt_bell
+  - newt_draw_root_text
+  - newt_centered_window
+
+constants:
+  NEWT_COLORSET_ROOT:
+    <<: *standard-int-const
+  NEWT_COLORSET_BORDER:
+    <<: *standard-int-const

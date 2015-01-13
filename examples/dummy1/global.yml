@@ -1,0 +1,28 @@
+# dummy1 extension main definition file
+# This is a dummy extension to test php-ext-gen
+
+macros:
+  required: &required
+    need: required
+  const-int: &int-named-const
+    type: int
+    computed: use-name
+  const-string: &string-named-const
+    type: string
+    computed: use-name
+
+#---------
+
+name: dummy1
+
+autoconf:
+#TODO
+
+functions:
+  - dummy1_func1
+
+constants:
+  DUMMY1_CONST1:
+    <<: *int-named-const
+  DUMMY1_COLOR:
+    <<: *string-named-const

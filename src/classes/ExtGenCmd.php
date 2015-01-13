@@ -27,32 +27,26 @@ private static function usage()
 echo "
 Available commands :
 
-  - build -f <format> [-s <syntax>] <src-path> <dest-path>
+    - build [-o <format>] [<src-path>] [<dest-path>]
 
         Build ready-to-compile extension source files.
 
         <src-path> is a path to an existing directory containing the input
-        definition files needed to build the extension source files.
+        definition files needed to build the extension source files. If not
+		set, defaults to the current working directory.
 
-        <dest-path> is the path where the resulting source files will be
-        created. For security reasons, if <dest-path> is an already-existing
-		file or directory, the command is aborted.
+        <dest-path> is the path where the output files will be
+        created. If not set, the default is to generate files in
+		<src-path>.
 
         Options :
-            -f <format> : Output format. The PHP flavor we are building for.
-                Possible values:
-                - php5: Any 5.x version of the default PHP interpreter(available
-                        from www.php.net).
-                - php7: version 7 of the default interpreter.
-                - hhvm: The HHVM environment.
-			-s <syntax> : Metadata syntax
-				Possible values:
-				- yaml (default)
-				- json
+            -o <format> : The PHP engine and version the extension is
+			    generated for. The default is to generate for the PHP engine
+				and version that is running this program.
+				<format> must be provided as '<engine>:<version>'.
+                Supported engines: php, hhvm
 
-    - help
-
-        Display this message
+    - help : Display this message
 
 Global options :
 
@@ -75,11 +69,15 @@ $action=(count($args)) ? array_shift($args) : 'help';
 switch($action)
     {
     case 'build':
-        if (count($args)!=2) self::error_abort('build requires 2 arguments');
-        list($source_dir,$dest_dir)=$args;
-		$format=$op->option('format');
-		if (is_null($format)) self::error_abort('no format provided');
-		ExtGen::build($source_dir,$dest_dir,$format,$op->option['syntax']);
+		$argc=count($args);
+        if (count($args)>2) self::error_abort("build requires 1 or 2 arguments ($argc given)");
+		$source_dir=(($argc > 0) ? $args[0] : '.');
+		$dest_dir=(($argc>1) ? $args[1] : $source_dir);
+
+		$worker=ExtGenGenerator::get_generator($op->option('format')
+			,$source_dir,$dest_dir);
+		$worker->read_source_data();
+		$worker->generate();
         break;
 
      case 'help':

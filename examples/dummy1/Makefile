@@ -1,6 +1,6 @@
 #==============================================================================
 
-EXTENSION = newt
+EXTENSION = dummy1
 TARGETS = extgen_$(EXTENSION).c
 PHP_EXT_GEN_PKG = ../../php-ext-gen.phk
 
