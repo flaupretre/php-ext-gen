@@ -43,6 +43,9 @@ parent::init_generate();
 //-----
 // PHP5-specific stuff
 
+$this->renderer->render_to_file('main.twig.c','extgen_php_'.$this->name.'.c');
+
+$this->renderer->render_to_file('config.twig.m4','config.m4');
 
 
 }

@@ -15,6 +15,16 @@ class ExtGen
 //----- Properties
 
 //-----
+// Return software version from package metadata
+
+public static function version()
+{
+$mnt=PHK_Mgr::uri_to_mnt(__FILE__);
+$pkg=PHK_Mgr::instance($mnt);
+return $pkg->option('version');
+}
+
+//-----
 // Return null if element does not exist
 
 public static function optional_element($arr,$key)

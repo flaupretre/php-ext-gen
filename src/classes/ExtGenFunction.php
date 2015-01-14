@@ -21,6 +21,7 @@ public $name;
 public $arguments;
 public $return_type;
 public $body;
+public $body_start_line; // Line number where function body starts
 
 //---------
 
@@ -31,15 +32,19 @@ PHO_Display::trace("Defining function $name");
 $pos=strpos($buf,"\n%%");
 if ($pos===false) throw new Exception('%% not found in function definition file');
 
-$this->body=substr($buf,$pos+2);
-$def=$parser->decode(substr($buf,0,$pos));
+$this->body=substr($buf,$pos+3);
+$header=substr($buf,0,$pos);
+$a=count_chars($header);
+$this->body_start_line=$a[10]+2; // Count of LF chars in header gives start line
 
-$treturn_type=ExtGen::optional_element($def,'return_type');
+$def=$parser->decode($header);
+
+$return_type=ExtGen::optional_element($def,'return_type');
 if (is_null($return_type)) $return_type='null';
 $return_type=strtolower($return_type);
 if (array_search($return_type,self::$return_types)===false)
 	throw new Exception("$return_type: Unsupported function return type");
-$this->return_type=$type;
+$this->return_type=$return_type;
 
 // Args
 
@@ -61,6 +66,14 @@ if (!is_null($argsdef))
 		$this->arguments[$argname]=$obj;
 		}
 	}
+}
+
+//------------
+// Expand function body through renderer
+
+public function expand($renderer)
+{
+$this->body=$renderer->render_string($this->name.' function body',$this->body);
 }
 
 //============================================================================

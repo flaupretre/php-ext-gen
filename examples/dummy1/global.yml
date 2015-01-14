@@ -18,6 +18,10 @@ name: dummy1
 autoconf:
 #TODO
 
+extra_files:
+  extra.c:
+    expand: true
+
 functions:
   - dummy1_func1
 

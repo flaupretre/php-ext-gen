@@ -2,6 +2,8 @@
 add -C src  .
 
 #-- External libraries
+#<TODO> For stable releases, it would be cleaner to replace this with
+#       subpackages (better version mgt)
 
 # Phool
 
@@ -11,6 +13,10 @@ add -t submodules/phool -C submodules/phool/src .
 
 add -b submodules/Yaml -C submodules/Yaml Exception Dumper.php Escaper.php \
 	Inline.php Parser.php Unescaper.php Yaml.php
+
+# Twig
+
+add -t submodules/twig -C submodules/twig/lib/Twig .
 
 #---------------------------------------------------------------------
 %options

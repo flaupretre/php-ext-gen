@@ -37,7 +37,9 @@ Available commands :
 
         <dest-path> is the path where the output files will be
         created. If not set, the default is to generate files in
-		<src-path>.
+        a subdirectory named 'gen' under <src-path>.
+        WARNING: *NEVER* use the same directory for source and destination (some
+		files could be overwritten).
 
         Options :
             -o <format> : The PHP engine and version the extension is
@@ -72,8 +74,9 @@ switch($action)
 		$argc=count($args);
         if (count($args)>2) self::error_abort("build requires 1 or 2 arguments ($argc given)");
 		$source_dir=(($argc > 0) ? $args[0] : '.');
-		$dest_dir=(($argc>1) ? $args[1] : $source_dir);
-
+		$dest_dir=(($argc>1) ? $args[1] : ($source_dir."/gen"));
+		if ($source_dir==$dest_dir)
+			throw new Exception('Destination must be the same as source');
 		$worker=ExtGenGenerator::get_generator($op->option('format')
 			,$source_dir,$dest_dir);
 		$worker->read_source_data();

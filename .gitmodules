@@ -4,3 +4,6 @@
 [submodule "submodules/phool"]
 	path = submodules/phool
 	url = git@github.com:flaupretre/phool.git
+[submodule "submodules/twig"]
+	path = submodules/twig
+	url = git@github.com:twigphp/Twig.git

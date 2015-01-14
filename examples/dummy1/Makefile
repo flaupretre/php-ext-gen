@@ -1,8 +1,15 @@
 #==============================================================================
 
-EXTENSION = dummy1
-TARGETS = extgen_$(EXTENSION).c
+# In a real extension, not bundled with the code generation software, this
+# should be modified to contain the location of the php-ext-gen.phk file
+
 PHP_EXT_GEN_PKG = ../../php-ext-gen.phk
+
+#-----------------
+
+EXTENSION = dummy1
+TARGETS = gen
+COMPILE_TARGET = gen/modules/$(EXTENSION).la
 
 include ../../make.vars
 include ../../make.common
@@ -15,7 +22,17 @@ all: base
 
 clean: clean_base
 
-extgen_$(EXTENSION).c :
-	$(PHPCMD) $(PHP_EXT_GEN_PKG) build
+base: gen
+
+gen:
+	mkdir gen && $(PHPCMD) $(PHP_EXT_GEN_PKG) build
+
+compile: $(COMPILE_TARGET)
+
+$(COMPILE_TARGET): gen
+	cd gen && phpize && ./configure && make
+
+install: compile
+	$(MAKE) -C gen $@
 
 #-----------------------------------------------------------------------------

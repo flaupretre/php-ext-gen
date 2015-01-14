@@ -6,14 +6,16 @@
 name:           //str
 version;        // str
 
-[namespace]:    // str
-
 [autoconf]:     // <TODO>
 
-extra-files:    // arr
-  - filename
+[flags]:
+  [debug]:      // bool - default = false
+
+[extra_files]:
+  <filename>:
+    [expand]:		// bool - Run through twig ? Default=false
   ...
- 
+	
 [functions]:    // arr
   - <function-name>
   ...

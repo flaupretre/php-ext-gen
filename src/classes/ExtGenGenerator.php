@@ -9,7 +9,7 @@
 * @package php-ext-gen
 */
 //============================================================================
-//---- All generator classes extend ExtGen through ExtGenGenerator
+//---- All generator classes extend ExtGenGenerator
 //---- None of these classes has a constructor
 
 abstract class ExtGenGenerator
@@ -17,20 +17,27 @@ abstract class ExtGenGenerator
 
 //----- Properties
 
-public $engine;		// Target PHP engine
-public $engine_version;	// Target engine version
 public $source_dir;	// Source directory
 public $dest_dir;	// Output directory
+public $renderer;
+public $parser;		// Metadata parser
 
-protected $parser;	// Metadata parser
+//-- These properties are available for templates
+// When modifying something here, please also modify the default_context() method
+
+public $engine;		// Target PHP engine. Array('name', 'version')
+public $generator;	// array of ('name' => one of ('php5', 'php7', 'hhvm'...))
+public $flags;		// Array
 
 public $name;		// Extension name
+public $upper_name;	// The same converted to uppercase
+
 public $version;	// Extension version
-public $namespace;	// Namespace (null if not defined)
 
 public $autoconf;	// Autoconf-related info
 
 public $global_data;
+public $extra_files; // array(filename => array('expand' => bool, 'contents' => string))
 
 public $functions;	// Function table. Array of ExtGenFunctions instances
 public $constants;	// Constant table. Array of ExtGenConstant instances
@@ -52,7 +59,7 @@ if (!is_dir($dest_dir))
 
 // Compute engine and engine version
 
-if (is_null($formatt))
+if (is_null($format))
 	{	// Determine from running engine
 	if (defined('HHVM_VERSION'))
 		{
@@ -73,35 +80,37 @@ else
 	}
 
 $engine=strtolower($engine);
-$gen=null;
+$generator=null;
 switch($engine)
 	{
 	case 'hhvm':
-		$gen='hhvm';
+		$generator='hhvm';
 		break;
 	case 'php':
-		if (strpos($version,'5.')===0) $gen='php5';
-		if (strpos($version,'7.')===0) $gen='php7';
+		if (strpos($version,'5.')===0) $generator='php5';
+		if (strpos($version,'7.')===0) $generator='php7';
 		break;
 	default:
 		throw new Exception("$engine: Unsupported PHP engine");
 	}
 
-if(is_null($gen)) throw new Exception("$format: Unsupported output format");
-PHO_Display::trace("Using $gen generator");
+if(is_null($generator)) throw new Exception("$format: Unsupported output format");
+PHO_Display::trace("Using $generator generator");
 
-$gen_class='ExtGenGenerator'.strtoupper($gen);
+$gen_class='ExtGenGenerator'.strtoupper($generator);
 $obj=new $gen_class();
 
 PHO_Display::trace("Generating for (engine=$engine ; version=$version)");
 
-$obj->engine=$engine;
-$obj->engine_version=$version;
+$obj->generator=array('name' => $generator);
+$obj->engine=array('name' => $engine,'version' => $version);
 $obj->source_dir=$source_dir;
 $obj->dest_dir=$dest_dir;
 $obj->parser=new ExtGenMetaParser($source_dir);
+$obj->renderer=new ExtGenRenderer($obj);
 
 $obj->init();
+
 return $obj;
 }
 
@@ -112,6 +121,31 @@ return $obj;
 protected function init_generate()
 {
 PHO_Display::info('Generating code...');
+
+$this->expand();
+
+// Generate extra files in output dir
+
+foreach($this->extra_files as  $name => $a)
+	{
+	$this->write_file($name,$a['contents']);
+	}
+}
+
+//-----
+// Expand all strings that need to go through twig (C code and others)
+
+private function expand()
+{
+$this->global_data->expand($this->renderer);
+
+foreach($this->functions as $function) $function->expand($this->renderer);
+
+foreach($this->extra_files as $name => $a)
+	{
+	if ($a['expand'])
+		$a['contents']=$this->renderer->render_string($name,$a['contents']);
+	}
 }
 
 //-----
@@ -151,19 +185,49 @@ try {
 
 	//--- Basic information
 
-	$this->name=ExtGen::element($data,'name');
-	$this->namespace=ExtGen::optional_element($data,'namespace');
+	$name=ExtGen::element($data,'name');
+	$allowed='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_';
+	if (strspn($name,$allowed)!==strlen($name))
+		throw new Exception("$name: Invalid extension name");
+	$this->name=$name;
+	$this->upper_name=strtoupper($name);
+
+	//--- Flags
+
+	$flags=ExtGen::optional_element($data,'flags');
+	if (is_null($flags)) $flags=array();
+
+	if (!array_key_exists('debug',$flags)) $flags['debug']=false;
+	
+	$this->flags=$flags;
 
 	//--- autoconf-related information
 
 	$def=ExtGen::optional_element($data,'autoconf');
-	$this->autoconf=(is_null($autoconf) ? null : new ExtGenAutoconf($def));
+	$this->autoconf=(is_null($def) ? null : new ExtGenAutoconf($def));
+
+	//--- Extra files
+	
+	$extra_files=ExtGen::optional_element($data,'extra_files');
+	if (is_null($extra_files)) $extra_files=array();
+	if (!is_array($extra_files))
+		throw new Exception("'extra_files' element must be an array");
+	$this->extra_files=array();
+	foreach($extra_files as $name => $a)
+		{
+		$expand=ExtGen::optional_element($a,'expand');
+		if (is_null($expand)) $expand=false;
+		$contents=$this->file_contents($name);
+		$this->extra_files[$name]=array(
+			'expand' => $expand,
+			'contents' => $contents);
+		}
 
 	//--- Get function names
 
-	$funcs=ExtGen::optional_element($data,'functions');
-	if (is_null($funcs)) $funcs=array();
-	if (!is_array($funcs))
+	$funcnames=ExtGen::optional_element($data,'functions');
+	if (is_null($funcnames)) $funcnames=array();
+	if (!is_array($funcnames))
 		throw new Exception("'functions' element must be an array");
 
 	//--- Constants
@@ -186,20 +250,53 @@ try {
 
 // Functions
 
-$this->functions=array();
-foreach($funcs as $name)
+$functions=array();
+foreach($funcnames as $fname)
 	{
-	if (array_key_exists($name,$this->functions))
-		throw new Exception("Function $name already defined");
+	if (array_key_exists($fname,$functions))
+		throw new Exception("Function $fname already defined");
 	try	{
-		$buf=$this->file_contents('func_'.$name.'.c');
-		$this->functions[$name]=new ExtGenFunction($name,$buf,$this->parser);
-		} catch(Exception $e) { throw new Exception($e->getMessage()." (while defining function $name)"); }
+		$buf=$this->file_contents($fname.'.func.c');
+		$functions[$fname]=new ExtGenFunction($fname,$buf,$this->parser);
+		} catch(Exception $e) { throw new Exception($e->getMessage()." (while defining function $fname)"); }
 	}
+$this->functions=$functions;
 
 // Global data
 
 $this->global_data=new ExtGenGlobalData($this);
+}
+
+//-----
+// Write a file to dest dir
+
+public function write_file($fname,$buf)
+{
+$this->renderer->reset_line_info($buf,$fname);
+file_put_contents($this->dest_dir.'/'.$fname,$buf);
+}
+
+//-----
+
+public function default_context()
+{
+return array(
+	'software'  => array(
+		'version'  => ExtGen::version()
+		),
+//---
+	 'engine'      => $this->engine
+	,'generator'   => $this->generator
+	,'flags'       => $this->flags
+	,'name'        => $this->name
+	,'upper_name'  => $this->upper_name
+	,'version'     => $this->version
+	,'autoconf'    => $this->autoconf
+	,'global_data' => $this->global_data
+	,'extra_files' => $this->extra_files
+	,'functions'   => $this->functions
+	,'constants'   => $this->constants
+	);
 }
 
 //============================================================================
