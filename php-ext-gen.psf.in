@@ -1,5 +1,9 @@
 
-add -C src  .
+set flags # -s -c gzip
+
+#-----
+
+add $(flags) -C src  .
 
 #-- External libraries
 #<TODO> For stable releases, it would be cleaner to replace this with
@@ -7,16 +11,16 @@ add -C src  .
 
 # Phool
 
-add -t submodules/phool -C submodules/phool/src .
+add $(flags) -t submodules/phool -C submodules/phool/src .
 
 # Yaml
 
-add -b submodules/Yaml -C submodules/Yaml Exception Dumper.php Escaper.php \
+add $(flags) -b submodules/Yaml -C submodules/Yaml Exception Dumper.php Escaper.php \
 	Inline.php Parser.php Unescaper.php Yaml.php
 
 # Twig
 
-add -t submodules/twig -C submodules/twig/lib/Twig .
+add $(flags) -t submodules/twig -C submodules/twig/lib/Twig .
 
 #---------------------------------------------------------------------
 %options

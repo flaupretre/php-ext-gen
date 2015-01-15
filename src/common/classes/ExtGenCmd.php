@@ -27,7 +27,7 @@ private static function usage()
 echo "
 Available commands :
 
-    - build [-o <format>] [<src-path>] [<dest-path>]
+    - build [-o <format>] [-d] [<src-path>] [<dest-path>]
 
         Build ready-to-compile extension source files.
 
@@ -47,6 +47,7 @@ Available commands :
 				and version that is running this program.
 				<format> must be provided as '<engine>:<version>'.
                 Supported engines: php, hhvm
+			-d: Activates debug mode
 
     - help : Display this message
 
@@ -78,7 +79,7 @@ switch($action)
 		if ($source_dir==$dest_dir)
 			throw new Exception('Destination must be the same as source');
 		$worker=ExtGenGenerator::get_generator($op->option('format')
-			,$source_dir,$dest_dir);
+			,$source_dir,$dest_dir,$op->option('options'));
 		$worker->read_source_data();
 		$worker->generate();
         break;

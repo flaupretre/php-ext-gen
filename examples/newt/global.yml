@@ -1,18 +1,15 @@
 # newt extension main definition file
 
 macros:
-  required: &required
-    need: required
-  const: &standard-int-const
+  standard-int-const: &standard-int-const
     type: int
-    computed:   use-name
+    computed: use-name
 
 #---------
 
 name: newt
 
-autoconf:
-#TODO
+autoconf:	#TODO
 
 functions:
   - newt_bell

@@ -17,17 +17,19 @@ class ExtGenCmdOptions extends PHO_Options
 // Short/long modifier args
 
 protected $opt_modifiers=array(
-	array('short' => 'v', 'long' => 'verbose', 'value' => false),
-	array('short' => 'q', 'long' => 'quiet'  , 'value' => false),
+	array('short' => 'v', 'long' => 'verbose' , 'value' => false),
+	array('short' => 'q', 'long' => 'quiet'   , 'value' => false),
 	array('short' => 'f', 'long' => 'format'  , 'value' => true),
 	array('short' => 's', 'long' => 'syntax'  , 'value' => true),
+	array('short' => 'd', 'long' => 'debug'   , 'value' => false),
 	);
 
 // Option values
 
 protected $options=array(
 	'format' => NULL,
-	'syntax' => 'yaml'
+	'syntax' => 'yaml',
+	'options' => 0
 	);
 
 
@@ -52,6 +54,10 @@ switch($opt)
 
 	case 's':
 		$this->options['syntax']=$arg;
+		break;
+
+	case 'd':
+		$this->options['debug'] |= ExtGenOptions::DEBUG;
 		break;
 	}
 }

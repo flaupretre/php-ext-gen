@@ -23,39 +23,38 @@ public $renderer;
 public $parser;		// Metadata parser
 
 //-- These properties are available for templates
-// When modifying something here, please also modify the default_context() method
+
+public $software;	// Information about the software
 
 public $engine;		// Target PHP engine. Array('name', 'version')
-public $generator;	// array of ('name' => one of ('php5', 'php7', 'hhvm'...))
-public $flags;		// Array
+public $generator;	// generator name
+public $flags;		// flags defined in global defs
+public $cli_options; // Options sent from command line
+
 
 public $name;		// Extension name
-public $upper_name;	// The same converted to uppercase
+public $uname;		// The same converted to uppercase
 
 public $version;	// Extension version
 
 public $autoconf;	// Autoconf-related info
 
 public $global_data;
-public $extra_files; // array(filename => array('expand' => bool, 'contents' => string))
+public $extra_files; // array of ExtGenExtraFile instances
 
 public $functions;	// Function table. Array of ExtGenFunctions instances
 public $constants;	// Constant table. Array of ExtGenConstant instances
 
 //---------
-
-abstract public function init();
-abstract public function generate();
-
-//-----
 // If $format=null -> automatic
 
-public static function get_generator($format,$source_dir,$dest_dir)
+public static function get_generator($format,$source_dir,$dest_dir,$options)
 {
 if (!is_dir($source_dir))
 	throw new Exception($source_dir.': directory not found');
 if (!is_dir($dest_dir))
 	throw new Exception($dest_dir.': directory not found');
+
 
 // Compute engine and engine version
 
@@ -102,12 +101,14 @@ $obj=new $gen_class();
 
 PHO_Display::trace("Generating for (engine=$engine ; version=$version)");
 
-$obj->generator=array('name' => $generator);
+$obj->generator=$generator;
+$obj->options=new ExtGenOptions($options);
 $obj->engine=array('name' => $engine,'version' => $version);
 $obj->source_dir=$source_dir;
 $obj->dest_dir=$dest_dir;
-$obj->parser=new ExtGenMetaParser($source_dir);
+$obj->parser=ExtGenMetaParser::create($obj);
 $obj->renderer=new ExtGenRenderer($obj);
+$obj->software=array('version'  => ExtGen::version());
 
 $obj->init();
 
@@ -115,21 +116,13 @@ return $obj;
 }
 
 //-----
-// Method called when a generator is starting its generate() method
-// Contains common pre-generate processing
+// Method called by the generator before it starts its specific processing
 
-protected function init_generate()
+protected function generate()
 {
 PHO_Display::info('Generating code...');
 
 $this->expand();
-
-// Generate extra files in output dir
-
-foreach($this->extra_files as  $name => $a)
-	{
-	$this->write_file($name,$a['contents']);
-	}
 }
 
 //-----
@@ -138,14 +131,6 @@ foreach($this->extra_files as  $name => $a)
 private function expand()
 {
 $this->global_data->expand($this->renderer);
-
-foreach($this->functions as $function) $function->expand($this->renderer);
-
-foreach($this->extra_files as $name => $a)
-	{
-	if ($a['expand'])
-		$a['contents']=$this->renderer->render_string($name,$a['contents']);
-	}
 }
 
 //-----
@@ -176,12 +161,23 @@ return $data;
 
 //-----
 
+public function getclass($type)
+{
+$class='ExtGen'.$type.strtoupper($this->generator);
+if (!class_exists($class,1)) $class='ExtGen'.$type;
+return $class;
+}
+
+//-----
+
 protected function read_source_data()
 {
 PHO_Display::info('Reading source files...');
 
+// Read data from global definition file
+
 try {
-	$data=$this->parser->decode($this->file_contents($current_file='global.yml'));
+	$data=$this->parser->decode_file('global');
 
 	//--- Basic information
 
@@ -190,7 +186,7 @@ try {
 	if (strspn($name,$allowed)!==strlen($name))
 		throw new Exception("$name: Invalid extension name");
 	$this->name=$name;
-	$this->upper_name=strtoupper($name);
+	$this->uname=strtoupper($name);
 
 	//--- Flags
 
@@ -204,24 +200,18 @@ try {
 	//--- autoconf-related information
 
 	$def=ExtGen::optional_element($data,'autoconf');
-	$this->autoconf=(is_null($def) ? null : new ExtGenAutoconf($def));
+	if (is_null($def)) $def=array();
+	$class=$this->getclass('Autoconf');
+	$this->autoconf=new $class($def);
 
 	//--- Extra files
 	
 	$extra_files=ExtGen::optional_element($data,'extra_files');
 	if (is_null($extra_files)) $extra_files=array();
-	if (!is_array($extra_files))
-		throw new Exception("'extra_files' element must be an array");
+	$class=$this->getclass('ExtraFile');
 	$this->extra_files=array();
-	foreach($extra_files as $name => $a)
-		{
-		$expand=ExtGen::optional_element($a,'expand');
-		if (is_null($expand)) $expand=false;
-		$contents=$this->file_contents($name);
-		$this->extra_files[$name]=array(
-			'expand' => $expand,
-			'contents' => $contents);
-		}
+	foreach($extra_files as $name => $def)
+		$this->extra_files[$name]=new $class($this,$name,$def);
 
 	//--- Get function names
 
@@ -237,30 +227,30 @@ try {
 	if (!is_array($constants))
 		throw new Exception("'constants' element must be an array");
 	$this->constants=array();
+	$class=$this->getclass('Constant');
 	foreach($constants as $name => $def)
 		{
 		try	{
 			if (array_key_exists($name,$this->constants))
 				throw new Exception("Constant $name already defined");
-			$obj=new ExtGenConstant($name,$def);
-			$this->constants[$name]=$obj;
+			$this->constants[$name]=new $class($name,$def);
 			} catch(Exception $e) {	throw new Exception($e->getMessage()." (while defining constant $name)"); }
 		}
-	} catch(Exception $e) { throw new Exception("$current_file: ".$e->getMessage()); }
+	} catch(Exception $e) { throw new Exception($e->getMessage().' (while reading global definition file)'); }
 
 // Functions
+// declared here because outside of 'global' exception catch block
 
-$functions=array();
+$class=$this->getclass('Function');
+$this->functions=array();
 foreach($funcnames as $fname)
 	{
-	if (array_key_exists($fname,$functions))
+	if (array_key_exists($fname,$this->functions))
 		throw new Exception("Function $fname already defined");
 	try	{
-		$buf=$this->file_contents($fname.'.func.c');
-		$functions[$fname]=new ExtGenFunction($fname,$buf,$this->parser);
+		$this->functions[$fname]=new $class($this,$fname);
 		} catch(Exception $e) { throw new Exception($e->getMessage()." (while defining function $fname)"); }
 	}
-$this->functions=$functions;
 
 // Global data
 
@@ -274,29 +264,6 @@ public function write_file($fname,$buf)
 {
 $this->renderer->reset_line_info($buf,$fname);
 file_put_contents($this->dest_dir.'/'.$fname,$buf);
-}
-
-//-----
-
-public function default_context()
-{
-return array(
-	'software'  => array(
-		'version'  => ExtGen::version()
-		),
-//---
-	 'engine'      => $this->engine
-	,'generator'   => $this->generator
-	,'flags'       => $this->flags
-	,'name'        => $this->name
-	,'upper_name'  => $this->upper_name
-	,'version'     => $this->version
-	,'autoconf'    => $this->autoconf
-	,'global_data' => $this->global_data
-	,'extra_files' => $this->extra_files
-	,'functions'   => $this->functions
-	,'constants'   => $this->constants
-	);
 }
 
 //============================================================================

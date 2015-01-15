@@ -1,4 +1,4 @@
-# int newt_centered_window ( int $width , int $height [, string $title ] )
+# int newt_centered_window ( int $width , int $height [, string $title=null ] )
 
 return_type: int
 
@@ -9,8 +9,12 @@ arguments:
     type: int
   title:
     type: string
-    default: null
+    nullok: true
 
-%%
+{% block body %}
 
-retval=newtCenteredWindow((long)width, (long)height, title_val);
+if (title_is_null) title=NULL;
+
+retval=newtCenteredWindow((long)width, (long)height, title);
+
+{% endblock %}

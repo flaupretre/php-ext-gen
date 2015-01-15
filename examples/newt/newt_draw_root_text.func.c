@@ -1,6 +1,4 @@
-# void newt_draw_root_text(int $left, int $top, string $text)
-
-return_type: null
+#proto: void newt_draw_root_text(int $left, int $top, string $text)
 
 arguments:
   left:
@@ -10,7 +8,6 @@ arguments:
   text:
     type: string
 
-%%
-
-newtDrawRootText ((long)left, (long)top, text_val);
-
+{% block body %}
+newtDrawRootText ((long)left, (long)top, text);
+{% endblock %}

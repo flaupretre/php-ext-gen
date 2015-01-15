@@ -8,22 +8,19 @@ version;        // str
 
 [autoconf]:     // <TODO>
 
-[flags]:
-  [debug]:      // bool - default = false
-
 [extra_files]:
   <filename>:
     [expand]:		// bool - Run through twig ? Default=false
   ...
 	
-[functions]:    // arr
+[functions]:
   - <function-name>
   ...
 
 [constants]:    // array of constant definitions
 
 #---------
-# A constant
+# Definition of a constant
 
 <constant-name>: // arr
   type:         //str - one of (null,bool,int,double,string,array)
@@ -34,13 +31,13 @@ version;        // str
   value:        // str - if computed==true, value is formula.
 
 #---------
-# A function
+# Definition of a function
 
 return_type:    // str - one of (null,bool,int,double,string,array)
 arguments:      // array of call argument definitions
 
 #---------
-# A call argument
+# Definition of a call argument
 
 <arg-name>:     // arr
   type:         // str - one of (bool,int,double,string,array) or mixed/[a_scalar_type]

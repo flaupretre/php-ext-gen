@@ -38,16 +38,18 @@ parent::read_source_data();
 
 public function generate()
 {
-parent::init_generate();
+parent::generate();
 
 //-----
 // PHP5-specific stuff
 
+foreach($this->functions as $func) $func->generate();
+
+foreach($this->extra_files as $file) $file->generate();
+
 $this->renderer->render_to_file('main.twig.c','extgen_php_'.$this->name.'.c');
 
 $this->renderer->render_to_file('config.twig.m4','config.m4');
-
-
 }
 
 //============================================================================

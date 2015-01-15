@@ -10,7 +10,7 @@
 */
 //============================================================================
 
-class ExtGenCallArg
+abstract class ExtGenCallArg
 {
 
 //----- Properties
@@ -19,17 +19,26 @@ private static $scalar_types=array('bool','int','double','string');
 
 
 public $ref;			// true -> pass by ref ; false -> by value
-public $type;		 	// Scalar type
+public $scalar_type;	// Scalar type
 public $accept_array;
 public $accept_scalar;
+public $mixed;			// shortcut for (accept_array && accept_scalar)
 public $nullok;			// accept null and transmit to function body ?
 public $optional;		// bool
 public $default;		// Default value
 
+public $func;			// Object - extends ExtGenFunction
+
 //---------
 
-public function __construct($def)
+abstract function generate();
+
+//---------
+
+public function __construct($function,$def)
 {
+$this->function=$function;
+
 $this->ref=ExtGen::optional_element($def,'ref');
 if (is_null($this->ref)) $this->ref=false;
 
@@ -38,6 +47,7 @@ if (substr($type,0,6)=='mixed/')
 	{
 	$this->accept_array=true;
 	$this->accept_scalar=true;
+	$this->mixed=true;
 	$scalar_type=substr($type,6);
 	self::check_scalar_type($scalar_type);
 	$this->scalar_type=$scalar_type;
@@ -46,11 +56,14 @@ elseif($type=='array')
 	{
 	$this->accept_array=true;
 	$this->accept_scalar=false;
+	$this->mixed=false;
+	$this->scalar_type=null;
 	}
 else
 	{
 	$this->accept_array=false;
 	$this->accept_scalar=true;
+	$this->mixed=false;
 	self::check_scalar_type($type);
 	$this->scalar_type=$type;
 	}

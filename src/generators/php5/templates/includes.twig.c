@@ -36,6 +36,7 @@
 
 #include "php.h"
 #include "zend_execute.h"
+#include "zend_hash.h"
 #include "TSRM/TSRM.h"
 
 #include "SAPI.h"
@@ -48,6 +49,7 @@
 #endif
 
 #include "ext/standard/php_string.h"
+#include "ext/hash/php_hash.h"
 #include "ext/hash/php_hash.h"
 
 {# TODO: Determiner les fichiers indispensables #}

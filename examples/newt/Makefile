@@ -1,7 +1,7 @@
 #==============================================================================
 
 # In a real extension, not bundled with the code generation software, this
-# should be modified to contain the location of the php-ext-gen.phk file
+# variable would contain the location of the php-ext-gen.phk file
 
 PHP_EXT_GEN_PKG = ../../php-ext-gen.phk
 

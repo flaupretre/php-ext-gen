@@ -22,10 +22,12 @@ arguments:
     nullok: true
     default: foo
 
-%% /* '%%' starts the function body */
+#------------------------------ Function code ------------------------------
+
+{% block body %}
 time_t t;
 
-/* Generated for the {{ engine.name }} ({{ engine.version }}) engine, using the {{ generator.name }} generator */
+/* Generated for the {{ global.engine.name }} ({{ global.engine.version }}) engine, using the {{ global.generator }} generator */
 
 /* Unnecessarily complicated function body */
 /* Just to demonstrate that we are quite far away from PHP, here */
@@ -80,4 +82,4 @@ printf("arg4 - new length is %d\n",arg4_len); /* Display 100 */
 t=time((time_t *)0);
 EXTGEN_STRING_REPLACE(retval, ctime(&t));
 
-/*----- That's all ----*/
+{% endblock body %}
