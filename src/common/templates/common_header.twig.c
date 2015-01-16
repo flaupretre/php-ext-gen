@@ -4,3 +4,13 @@
 * Target engine: {{ engine.name }} (v {{ engine.version }})
 * Generator: {{ generator }}
 ========================================================================*/
+
+{% if options.debug %}
+#define EXTGEN_DEBUG
+{% endif %}
+
+#define EXTGEN_GENERATOR		"{{ generator }}"
+#define EXTGEN_VERSION			"{{ software.version }}"
+#define EXTGEN_GENERATION_DATE	"{{ date()|date("Y/m/d") }}"
+#define EXTGEN_TARGET_ENGINE	"{{ engine.name }}"
+#define EXTGEN_TARGET_VERSION	"{{ engine.version }}"

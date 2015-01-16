@@ -32,7 +32,7 @@ return SUCCESS;
 
 static PHP_MINIT_FUNCTION({{ name }})
 {
-/* build_constant_values(); */
+build_constant_values();
 
 {{ global_data.minit_pre_code }}
 

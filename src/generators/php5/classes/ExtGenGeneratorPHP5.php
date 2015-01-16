@@ -34,17 +34,31 @@ parent::read_source_data();
 }
 
 //---------
+
+public function output()
+{
+$this->prepare();
+$this->generate();
+}
+
+//---------
+
+public function prepare()
+{
+parent::prepare();
+
+foreach($this->functions as $func) $func->prepare();
+foreach($this->extra_files as $file) $file->prepare();
+}
+
+//---------
 // Output directory: ($this->dest_dir)
 
 public function generate()
 {
-parent::generate();
-
-//-----
-// PHP5-specific stuff
+PHO_Display::info('Generating...');
 
 foreach($this->functions as $func) $func->generate();
-
 foreach($this->extra_files as $file) $file->generate();
 
 $this->renderer->render_to_file('main.twig.c','extgen_php_'.$this->name.'.c');

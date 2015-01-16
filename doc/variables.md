@@ -3,52 +3,57 @@
 <table>
 
 <tr>
-<th>PHP</td>
-<th>C (PHP 5)</td>
-<th>C (PHP 7)</td>
-<th>Comments
+<th>PHP</th>
+<th>EG type</th>
+<th>Var names</th>
+<th>PHP 5</th>
+<th>PHP 7</th>
+<th>HHVM</th>
 </tr>
 
 <tr>
 <td>bool</td>
-<td>zend_bool <i>var</i></td>
-<td>int <i>var</i></td>
-<td>false if <i>var</i> == 0, true otherwise
+<td>eg_bool</td>
+<td><i>var</i></td>
+<td>zend_bool</td>
+<td>int</td>
+<td>?</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td>long <i>var</i></i></td>
-<td>zend_long <i>var</i></td>
-<td>&nbsp;</td>
+<td>eg_int</td>
+<td><i>var</i></td>
+<td>long</td>
+<td>zend_long</td>
+<td>?</td>
 </tr>
 
 <tr>
 <td>double</i></td>
-<td>double <i>var</i></td>
-<td>double <i>var</i></td>
-<td>&nbsp;</td>
+<td>eg_double</i></td>
+<td><i>var</i></td>
+<td>double</td>
+<td>double</td>
+<td>?</td>
 </tr>
 
 <tr>
 <td>string</td>
-<td>char *<i>var</i><br>int <i>var</i>_len</td>
-<td>char *<i>var</i><br>size_t <i>var</i>_len</td>
-<td>extend using :<br>EXTGEN_STR_REALLOC(<i>var</i>,[new_len])</td>
+<td>eg_string<br>eg_str_size</td>
+<td><i>var</i><br><i>var</i>_len</td>
+<td>char *<br>int</td>
+<td>char *<br>size_t</td>
+<td>?</td>
 </tr>
 
 <tr>
 <td>array</td>
-<td>Hastable *<i>var</i>_array</td>
-<td>Hastable *<i>var</i>_array</td>
-<td></td>
-</tr>
-
-<tr>
-<td>mixed (arg only)</td>
-<td>Hastable *<i>var</i>_array<br>+ scalar vars</td>
-<td>Hastable *<i>var</i>_array<br>+ scalar vars</td>
-<td>If arg is array, <i>var</i>_array is non-NULL</td>
+<td>eg_array</td>
+<td><i>var</i>_array</td>
+<td>Hastable *</td>
+<td>Hastable *</td>
+<td>?</td>
 </tr>
 
 </table>

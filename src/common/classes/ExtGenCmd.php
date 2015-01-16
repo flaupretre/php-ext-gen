@@ -76,12 +76,21 @@ switch($action)
         if (count($args)>2) self::error_abort("build requires 1 or 2 arguments ($argc given)");
 		$source_dir=(($argc > 0) ? $args[0] : '.');
 		$dest_dir=(($argc>1) ? $args[1] : ($source_dir."/gen"));
+		if ($argc>1) $dest_dir=$args[1];
+		else
+			{ // When dafault, create dir if not existing
+			$dest_dir=$source_dir."/gen";
+			if (!is_dir($dest_dir)) mkdir($dest_dir);
+			if (!is_dir($dest_dir))
+				throw new Exception("$dest_dir: cannot create directory");
+			}
 		if ($source_dir==$dest_dir)
-			throw new Exception('Destination must be the same as source');
+			throw new Exception('Source and destination must be different');
+
 		$worker=ExtGenGenerator::get_generator($op->option('format')
 			,$source_dir,$dest_dir,$op->option('options'));
 		$worker->read_source_data();
-		$worker->generate();
+		$worker->output();
         break;
 
      case 'help':

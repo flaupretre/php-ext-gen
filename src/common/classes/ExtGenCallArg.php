@@ -31,10 +31,6 @@ public $func;			// Object - extends ExtGenFunction
 
 //---------
 
-abstract function generate();
-
-//---------
-
 public function __construct($function,$def)
 {
 $this->function=$function;
@@ -84,6 +80,12 @@ else
 		throw new Exception('When an arg can be an array, its default value must be null');
 	$this->default=$default;
 	}
+}
+
+//-----
+
+protected function prepare()
+{
 }
 
 //-----

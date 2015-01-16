@@ -46,6 +46,10 @@ public $functions;	// Function table. Array of ExtGenFunctions instances
 public $constants;	// Constant table. Array of ExtGenConstant instances
 
 //---------
+
+abstract public function output();
+
+//---------
 // If $format=null -> automatic
 
 public static function get_generator($format,$source_dir,$dest_dir,$options)
@@ -94,9 +98,12 @@ switch($engine)
 	}
 
 if(is_null($generator)) throw new Exception("$format: Unsupported output format");
+$gen_class='ExtGenGenerator'.strtoupper($generator);
+if (!class_exists($gen_class,1))
+	throw new Exception("$generator: this generator is not available yet");
+
 PHO_Display::trace("Using $generator generator");
 
-$gen_class='ExtGenGenerator'.strtoupper($generator);
 $obj=new $gen_class();
 
 PHO_Display::trace("Generating for (engine=$engine ; version=$version)");
@@ -116,21 +123,10 @@ return $obj;
 }
 
 //-----
-// Method called by the generator before it starts its specific processing
 
-protected function generate()
+protected function prepare()
 {
-PHO_Display::info('Generating code...');
-
-$this->expand();
-}
-
-//-----
-// Expand all strings that need to go through twig (C code and others)
-
-private function expand()
-{
-$this->global_data->expand($this->renderer);
+$this->global_data->prepare();
 }
 
 //-----

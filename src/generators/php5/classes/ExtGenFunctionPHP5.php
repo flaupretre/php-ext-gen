@@ -17,6 +17,7 @@ class ExtGenFunctionPHP5 extends ExtGenFunction
 
 public $parse_format;		// string
 public $parse_arguments;	// string
+public $call_arg_list;		// string
 
 //---------
 
@@ -27,21 +28,27 @@ parent::__construct($gen,$name);
 
 //----------
 
-public function generate()
+public function prepare()
 {
 $parse_format='';
 $pargs=array();
+$cargs=array();
 $num=0;
 
 foreach($this->arguments as $argname => $arg)
 	{
-	$arg->generate(); /* Prepare data */
+	$arg->prepare(); /* Prepare data */
 	
 	if ($num === $this->required_args_count) $parse_format .= '|';
 	$parse_format .= $arg->parse_format;
 	foreach($arg->parse_arguments as $parg)
 		{
 		$pargs[]='&'.$argname.$parg;
+		$cargs[]=$argname.$parg;
+		}
+	foreach($arg->vars as $var)
+		{
+		$cargs[]=$argname.$var['ext'];
 		}
 	$num++;
 	}
@@ -52,11 +59,19 @@ $this->parse_arguments=trim(implode(', ',$pargs));
 if ($this->parse_arguments !== '')
 	$this->parse_arguments=', '.$this->parse_arguments;
 
-//------ Rendering
-//------ $this->body extends 'function.twig.c'. This way, every
-//------ part of the function can be overriden by user code.
+$this->call_arg_list=trim(implode(', ',$cargs));
+}
 
-$buf=$this->gen->renderer->render_string($this->filename,$this->body
+//----------
+// user code is a a twig template containing blocks. Whe have it extend
+// 'function.twig.c'. This way, every part of the function code can be overriden
+// by user code.
+
+public function generate()
+{
+$user_code="{% extends 'function.twig.c' %}\n".$this->user_code;
+
+$buf=$this->gen->renderer->render_string($this->filename,$user_code
 	,array('func' =>$this, 'global' => $this->gen));
 $this->gen->write_file($this->dest_filename,$buf);
 }

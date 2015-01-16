@@ -57,7 +57,7 @@ switch($opt)
 		break;
 
 	case 'd':
-		$this->options['debug'] |= ExtGenOptions::DEBUG;
+		$this->options['options'] |= ExtGenOptions::DEBUG;
 		break;
 	}
 }

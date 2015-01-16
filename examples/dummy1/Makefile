@@ -8,7 +8,7 @@ PHP_EXT_GEN_PKG = ../../php-ext-gen.phk
 #-----------------
 
 EXTENSION = dummy1
-TARGETS = gen
+TARGETS = gen/extgen_php_$(EXTENSION).c
 COMPILE_TARGET = gen/modules/$(EXTENSION).la
 
 include ../../make.vars
@@ -21,10 +21,11 @@ include ../../make.common
 all: base
 
 clean: clean_base
+	/bin/rm -rf gen
 
-base: gen
+base: $(TARGETS)
 
-gen:
+$(TARGETS):
 	mkdir gen && $(PHPCMD) $(PHP_EXT_GEN_PKG) build
 
 compile: $(COMPILE_TARGET)

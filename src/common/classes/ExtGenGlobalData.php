@@ -14,6 +14,9 @@ class ExtGenGlobalData
 {
 
 //----- Properties
+
+public $gen;
+
 // Properties need to be declared to be accessible bt twig using '.'
 
 public $header;
@@ -48,11 +51,13 @@ private static $data_files=array(
 
 //---------
 
-public function __construct($main)
+public function __construct($gen)
 {
+$this->gen=$gen;
+
 foreach(self::$data_files as $fname => $prop)
 	{
-	$buf=$main->optional_file_contents($fname);
+	$buf=$gen->optional_file_contents($fname);
 	if (is_null($buf)) $buf='';
 	$this->$prop=$buf;
 	}
@@ -61,11 +66,11 @@ foreach(self::$data_files as $fname => $prop)
 //------------
 // Expand every property through renderer
 
-public function expand($renderer)
+public function prepare()
 {
 foreach(self::$data_files as $fname => $prop)
 	{
-	$this->$prop=$renderer->render_string($fname,$this->$prop);
+	$this->$prop=$this->gen->renderer->render_string($fname,$this->$prop);
 	}
 }
 

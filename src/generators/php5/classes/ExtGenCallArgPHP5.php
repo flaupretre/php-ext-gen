@@ -15,10 +15,11 @@ class ExtGenCallArgPHP5 extends ExtGenCallArg
 
 //----- Properties
 
-public $vars;	// array(C type, C name extension)
+public $vars;	// array('type' => C type, 'ext' => C name extension)
 public $parse_format;
 public $parse_arguments;	// array of name extensions
 public $receive_zval;
+public $zval_type;
 
 //---------
 
@@ -31,23 +32,33 @@ parent::__construct($function,$def);
 // Prepare data for code generation. When logic is complex, it is easier to
 // do it in PHP.
 
-public function generate()
+public function prepare()
 {
+parent::prepare();
+
+//----
+
 $vars=array();
 $parse_format='';
 $parse_arguments=array();
 $receive_zval=false;
 $scalar_format='';
 $scalar_arguments=array();
+$zval_type=0;
 
-if ($this->accept_array) $vars[]=array('HashTable *','_array');
+if ($this->accept_array)
+	{
+	$vars[]=array('eg_array *','_array');
+	$zval_type='EG_IS_ARRAY';
+	}
 if ($this->accept_scalar)
 	{
 	$scalar_argument=array('');
+	$zval_type='EG_IS_'.strtoupper($this->scalar_type);
 	switch($this->scalar_type)
 		{
 		case 'bool':
-			$vars[]=array('zend_bool','');
+			$vars[]=array('eg_bool','');
 			$scalar_format='b';
 			break;
 		case 'int':
@@ -100,6 +111,7 @@ foreach($vars as $var)
 $this->parse_format    =$parse_format;
 $this->parse_arguments =$parse_arguments;
 $this->receive_zval    =$receive_zval;
+$this->zval_type=$zval_type;
 }
 
 //============================================================================

@@ -39,13 +39,20 @@ $this->contents=$gen->file_contents($name);
 }
 
 //---------
-// Create the file in dest dir. If expand is set, run it through twig before
+// If expand is set, run contents through twig
+
+public function prepare()
+{
+if ($this->expand)
+	$this->contents=$this->gen->renderer->render_string($this->name,$this->contents);
+}
+
+//---------
+// Create the file in dest dir.
 
 public function generate()
 {
-$buf=$this->contents;
-if ($this->expand) $buf=$this->gen->renderer->render_string($this->name,$buf);
-$this->gen->write_file($this->name,$buf);
+$this->gen->write_file($this->name,$this->contents);
 }
 
 //============================================================================

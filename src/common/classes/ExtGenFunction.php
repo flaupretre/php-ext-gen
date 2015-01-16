@@ -23,7 +23,7 @@ public $dest_filename;
 
 public $arguments;
 public $return_type;
-public $body;
+public $user_code;
 public $required_args_count;	// Count of non-optionala args
 public $args_count;
 
@@ -31,6 +31,7 @@ public $gen;
 
 //---------
 
+abstract public function prepare();
 abstract public function generate();
 
 //---------
@@ -50,14 +51,14 @@ $pos=strpos($buf,"{%");
 if ($pos===false)
 	{
 	$meta=$buf;
-	$body='';
+	$user_code='';
 	}
 else
 	{
 	$meta=substr($buf,0,$pos);
-	$body=substr($buf,$pos);
+	$user_code=substr($buf,$pos);
 	}
-$this->body="{% extends 'function.twig.c' %}\n".$body;
+$this->user_code=trim($user_code)."\n";
 $def=$gen->parser->decode($meta);
 
 $return_type=ExtGen::optional_element($def,'return_type');
