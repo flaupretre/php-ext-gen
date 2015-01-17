@@ -40,6 +40,22 @@ return p;
 }
 
 /*---------------------------------------------------------------*/
+/* Adapted from zval_copy_ctor() */
+/* If no destructor provided, defaults to ZVAL_PTR_DTOR */
+
+static HashTable *_eg_zval_array_duplicate(HashTable *source_ht)
+{
+HashTable *dest_ht;
+zval *tmp;
+
+ALLOC_HASHTABLE_REL(dest_ht);
+zend_hash_init(dest_ht, zend_hash_num_elements(source_ht), NULL, ZVAL_PTR_DTOR, 0);
+zend_hash_copy(dest, source_ht, (copy_ctor_func_t) zval_add_ref, (void *) &tmp, sizeof(zval *));
+dest_ht->nNextFreeElement = source_ht->nNextFreeElement;
+return dest_ht;
+}
+
+/*---------------------------------------------------------------*/
 
 static int _eg_extension_is_loaded(char *name TSRMLS_DC)
 {

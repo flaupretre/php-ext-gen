@@ -15,7 +15,7 @@ typedef HashTable *eg_array;
 typedef zend_uchar	eg_type;
 
 /*---------------------------------------------------------------*/
-/*--- Argument/retval types */
+/*--- Variable types */
 
 #define EG_IS_NULL		(eg_type)IS_NULL
 #define EG_IS_BOOL		(eg_type)IS_BOOL
@@ -30,26 +30,92 @@ typedef zend_uchar	eg_type;
 /*---------------------------------------------------------------*/
 /*--- retval structure */
 
-struct eg_retval_struct
-	{
-	eg_type type;
-	eg_bool	bool_val;
-	eg_int int_val;
-	eg_double double_val;
-	eg_string string_val;
-	eg_str_size string_len;
-	eg_array array_val;
-	};
+#define _EG_TYPE_VARS \
+	eg_type type; \
+	eg_bool	bval; \
+	eg_int ival; \
+	eg_double dval; \
+	eg_string sval; \
+	eg_str_size slen; \
+	eg_array aval;
 
-#define _EG_INIT_RETVAL(ret) { \
-	ret.type=EG_IS_NULL; \
-	ret.bool_val=FALSE; \
-	ret.int_val=(eg_int)0; \
-	ret.double_val=(eg_double)0; \
-	ret.string_val=NULL; \
-	ret.string_len=(eg_str_size)0; \
-	ret_array_val=NULL; \
+struct _eg_func_argument_struct
+	{
+	eg_bool is_unset;
+	eg_bool is_null;
+	zval *outzp;
+	_EG_TYPE_VARS
 	}
+
+struct _eg_func_retval_struct
+	{
+	_EG_TYPE_VARS
+	}
+
+/* _tp is a pointer to the structure containing the _EG_TYPE_VARS */
+
+#define _EG_FUNC_TYPE_INIT(_tp) \
+	(_tp)->type=EG_IS_NULL; \
+	(_tp)->bval=FALSE; \
+	(_tp)->ival=(eg_int)0; \
+	(_tp)->dval=(eg_double)0; \
+	(_tp)->sval=NULL; \
+	(_tp)->slen=(eg_str_size)0; \
+	(_tp)->aval=NULL;
+
+#define EG_FUNC_RETVAL_NULL() \
+	{ \
+	if (eg_ret->type != EG_IS_NULL) \
+		{ \
+		switch (eg_ret->type) \
+			{ \
+			case EG_IS_STRING: \
+				eg_allocate(eg_ret->sval,0); \
+				break; \
+			case EG_IS_ARRAY: \
+				eg_array_free(eg_ret->aval); \
+				break; \
+			} \
+		_EG_FUNC_TYPE_INIT(eg_ret); \
+		} \
+	} \
+
+#define EG_FUNC_RETVAL_BOOL(val)	{ EG_FUNC_RETVAL_NULL(); eg_ret->type=EG_IS_BOOL ; eg_ret->bval=(val); }
+#define EG_FUNC_RETVAL_INT(val)	{ EG_FUNC_RETVAL_NULL(); eg_ret->type=EG_IS_INT ; eg_ret->ival=(val); }
+#define EG_FUNC_RETVAL_DOUBLE(val)	{ EG_FUNC_RETVAL_NULL(); eg_ret->type=EG_IS_DOUBLE ; eg_ret->dval=(val); }
+
+/* (len) must be referenced only once (can be strlen()) */ \
+#define EG_FUNC_RETVAL_STRINGL(str, len, dup) \
+	{ \
+	EG_FUNC_RETVAL_NULL(); \
+	eg_ret->slen = len; \
+	eg_ret->sval = ((dup) ? eg_eduplicate(str,eg_ret->slen) : (str)); \
+	eg_ret->type=EG_IS_STRING; \
+	}
+
+#define EG_FUNC_RETVAL_STRING(str, dup) EG_FUNC_RETVAL_STRINGL(str, strlen(str), dup)
+
+#define EG_FUNC_RETVAL_ARRAY(val,dup) \
+	{ \
+	EG_FUNC_RETVAL_NULL(); \
+	eg_ret->aval=((dup) ? _eg_zval_array_duplicate(val) : (val) \
+	eg_ret->type=EG_IS_ARRAY ; \
+	}
+
+#define EG_FUNC_RETVAL_FALSE()		EG_FUNC_RETVAL_BOOL(EG_FALSE)
+#define EG_FUNC_RETVAL_TRUE()		EG_FUNC_RETVAL_BOOL(EG_TRUE)
+
+#define EG_FUNC_RETURN_NULL()				{ EG_FUNC_RETVAL_NULL(); return; }
+#define EG_FUNC_RETURN_BOOL(val)			{ EG_FUNC_RETVAL_BOOL(val); return; }
+#define EG_FUNC_RETURN_INT(val)				{ EG_FUNC_RETVAL_INT(val); return; }
+#define EG_FUNC_RETURN_DOUBLE(val)			{ EG_FUNC_RETVAL_DOUBLE(val); return; }
+#define EG_FUNC_RETURN_STRINGL(str,len,dup)	{ EG_FUNC_RETVAL_STRINGL(str,len,dup); return; }
+#define EG_FUNC_RETURN_STRING(str,dup)		{ EG_FUNC_RETVAL_STRING(str,dup); return; }
+#define EG_FUNC_RETURN_ARRAY(val,dup)		{ EG_FUNC_RETVAL_ARRAY(val,dup); return; }
+
+#define eg_array_efree(arr)	(void)zend_hash_destroy(arr)
+
+#define EG_ARRAY_EFREE(arr) { eg_array_efree(arr); arr=NULL; }
 
 /*---------------------------------------------------------------*/
 /*---- Memory management */
@@ -374,9 +440,7 @@ typedef struct {
 #endif
 
 /*---------------------------------------------------------------*/
-/* extgen-specific
-
-#define EG_RETURN()		{ return &eg_ret; }
+/* extgen-specific */
 
 
 /*---------------------------------------------------------------*/
@@ -402,6 +466,7 @@ typedef struct {
 
 static void *_eg_allocate(void *ptr, size_t size, int persistent);
 static void *_eg_duplicate(void *ptr, size_t size, int persistent);
+static HashTable *_eg_zval_array_duplicate(HashTable *source_ht);
 static int _eg_extension_is_loaded(char *name TSRMLS_DC);
 
 /*============================================================================*/

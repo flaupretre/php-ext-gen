@@ -1,28 +1,23 @@
 /* Defines function {{ func.name }} */
 
-{% block pre %}
-{% endblock pre %}
+{% block user_header %}
+{% endblock user_header %}
 
 /*---------------------------------------------------------------------*/
 /* Internal function */
 
-static struct eg_retval_struct *extgen_func_{{ func.name }}
-	({{ func.call_arg_list }})
-{% for argname,arg in func.arguments %}
-{% for var in arg.vars %}
-{{ var.type}} {{argname}}{{ var.ext }};
-{% endfor %}
-{% endfor %}
+static void extgen_func_{{ func.name }}(
+struct _eg_func_retval_struct *eg_ret
+, int _eg_num_set_args
+{% for argname in func.arguments|keys %}
+, _eg_func_argument_struct *{{ argname }}
+{% endfor %} )
 {	/*---- Function body */
-struct eg_retval_struct eg_ret;
-_EG_INIT_RETVAL(eg_ret);
 
 { /* Enclose in braces because of argument declarations */
-{% block body %}
-{% endblock body %}
-}
-
-EG_RETURN();
+{% block user_body %}
+{% endblock user_body %}
+} /* Here, we must return immediately as return can be done from inside body %}
 }
 
 /*---------------------------------------------------------------------*/
@@ -30,36 +25,53 @@ EG_RETURN();
 
 PHP_FUNCTION({{ func.name }})
 {
-{% for argname,arg in func.arguments %}
-{% for var in arg.vars %}
-{{ var.type}} {{argname}}{{ var.ext }}=({{ var.type}})0;
-{% endfor %}
-{% endfor %}
-struct eg_retval_struct *retp;
+struct eg_retval_struct eg_ret_s;
+int _eg_num_set_args;
+{% for argname in func.arguments|keys %}
+_eg_func_argument_struct {{ argname }}_s;
+{% endfor %} )
+{% block user_external_func_declarations %}
+{% endblock user_external_func_declarations %}
 
-/*---- Parse arguments ------------------*/
+/* Init extgen local variables */
 
-{% block argument_parsing %}
+_eg_num_set_args=ZEND_NUM_ARGS();
+_EG_FUNC_TYPE_INIT(&eg_ret_s);
+{% for argname in func.arguments|keys %}
+{{ argname }}_s.is_unset=EG_FALSE;
+{{ argname }}_s.is_null=EG_FALSE;
+{{ argname }}_s.outzp=(zval *)0;
+_EG_FUNC_TYPE_INIT(&{{ argname }}_s);
+{% endfor %} )
+{% block user_external_post_init %}
+{% endblock user_external_post_init %}
 
-if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "{{ func.parse_format }}"
-	{{ func.parse_arguments }}) == FAILURE) return;
-/*TODO*/
-{% endblock argument_parsing %}
+/* Parse arguments */
 
-{% block pre_call_function %}
-{% endblock pre_call_function %}
+{% include 'argument_parsing.twig.c' %}
 
-/*---- Call internal function */
-{ /* Enclose in braces because of argument declarations */
-retp=extgen_func_{{ func.name }}({{ func.call_arg_list }});
-}
+	{ /* Enclose in braces because of possible argument declarations */
 
-{% block post_call_function %}
-{% endblock post_call_function %}
+	/*---- Call internal function */
 
-/*---- Compute return values */
+	{% block user_external_pre_call %}
+	{% endblock user_external_pre_call %}
+
+		{ /* Enclose in braces because of possible argument declarations */
+		extgen_func_{{ func.name }}(
+			  &eg_ret_s
+			, _eg_num_set_args
+			{% for argname in func.arguments|keys %}, &{{ argname }}_s{% endfor %} )
+		}
+
+	{% block user_external_post_call %}
+	{% endblock user_external_post_call %}
+	}
 
 {% block compute_return_values %}
-/* TODO */
+{% include 'compute_return_values.twig.c' %}
 {% endblock compute_return_values %}
+
+{% block user_external_end %}
+{% endblock user_external_end %}
 }

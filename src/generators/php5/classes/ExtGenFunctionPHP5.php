@@ -17,7 +17,6 @@ class ExtGenFunctionPHP5 extends ExtGenFunction
 
 public $parse_format;		// string
 public $parse_arguments;	// string
-public $call_arg_list;		// string
 
 //---------
 
@@ -31,8 +30,7 @@ parent::__construct($gen,$name);
 public function prepare()
 {
 $parse_format='';
-$pargs=array();
-$cargs=array();
+$parse_arguments='';
 $num=0;
 
 foreach($this->arguments as $argname => $arg)
@@ -41,25 +39,14 @@ foreach($this->arguments as $argname => $arg)
 	
 	if ($num === $this->required_args_count) $parse_format .= '|';
 	$parse_format .= $arg->parse_format;
+	
 	foreach($arg->parse_arguments as $parg)
-		{
-		$pargs[]='&'.$argname.$parg;
-		$cargs[]=$argname.$parg;
-		}
-	foreach($arg->vars as $var)
-		{
-		$cargs[]=$argname.$var['ext'];
-		}
+		$parse_arguments .= ', &'.$argname."_s.".$parg;
 	$num++;
 	}
 
 $this->parse_format=$parse_format;
-
-$this->parse_arguments=trim(implode(', ',$pargs));
-if ($this->parse_arguments !== '')
-	$this->parse_arguments=', '.$this->parse_arguments;
-
-$this->call_arg_list=trim(implode(', ',$cargs));
+$this->parse_arguments=$parse_arguments;
 }
 
 //----------

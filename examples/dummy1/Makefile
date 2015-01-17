@@ -30,10 +30,10 @@ $(TARGETS):
 
 compile: $(COMPILE_TARGET)
 
-$(COMPILE_TARGET): gen
+$(COMPILE_TARGET): $(TARGETS)
 	cd gen && phpize && ./configure && make
 
-install: compile
+install: $(COMPILE_TARGET)
 	$(MAKE) -C gen $@
 
 #-----------------------------------------------------------------------------

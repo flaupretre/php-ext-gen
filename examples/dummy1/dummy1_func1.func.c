@@ -3,8 +3,6 @@
 # string dummy1_func1(mixed/bool $arg1, double &$arg2, string &$arg3
 #				, [mixed/string &$arg4="foo"])
 
-return_type: string
-
 arguments:
   arg1:
     type: mixed/string
@@ -25,12 +23,9 @@ arguments:
 #------------------------------ Function code ------------------------------
 
 {% block body %}
-time_t t;
-
-/* Generated for the {{ global.engine.name }} ({{ global.engine.version }}) engine, using the {{ global.generator }} generator */
-
 /* Unnecessarily complicated function body */
-/* Just to demonstrate that we are quite far away from PHP, here */
+
+time_t t;
 
 /* Print arg1 type and value */
 /* arg1 can be array, bool, or null */
@@ -57,7 +52,7 @@ printf("Returned arg2 is %f\n",arg2);
 char *p="I need space, more SPACE !!!";
 
 printf("Received arg3 is <%s> (length=%d)\n",arg3,arg3_len);
-EXTGEN_STRING_REPLACE(arg3, p);
+EG_ARG_STRING_REPLACE(arg3, p);
 strcpy(arg3,p);
 printf("Returned arg3 is <%s>",arg3,arg3_len);
 }
@@ -73,13 +68,14 @@ if(arg4_is_null) {	/* Check if null */
 	printf("arg4 is a string, value=<%s>\n",arg4);
 }
 
-EXTGEN_STRING_REALLOC(arg4, 100);
+EG_FUNC_ARG_STRING_REALLOC(arg4, 100);
 strcpy(arg4,"string to return");
 printf("arg4 - new length is %d\n",arg4_len); /* Display 100 */
 
 /* Now, return value */
 /* Not thread-safe, but that's just a prototype :) */
+
 t=time((time_t *)0);
-EXTGEN_STRING_REPLACE(retval, ctime(&t));
+EG_FUNC_RET_STRING(ctime(&t),1);
 
 {% endblock body %}

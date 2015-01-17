@@ -8,12 +8,16 @@
 {%  for func in functions %}
 ZEND_BEGIN_ARG_INFO_EX(arginfo_func_{{ func.name }}, 0, 0, {{ func.required_args_count }})
 {% for argname,arg in func.arguments %}
-{% set byref=(arg.ref ? '1' : '0') %}
-{% if arg.mixed %}
-	ZEND_ARG_INFO({{ byref }}, {{ argname }})
-{% else %}
-	ZEND_ARG_TYPE_INFO({{ byref }}, {{ argname }}, {{ arg.zval_type }}, {{ byref }})
-{% endif %}
+	{% set byref=(arg.ref ? '1' : '0') %}
+	{% if arg.mixed %}
+		ZEND_ARG_INFO({{ byref }}, {{ argname }})
+	{% else %}
+		{% if (arg.type=='array') %}
+			ZEND_ARG_ARRAY_INFO({{ byref }}, {{ argname }}, {{ nullok }})
+		{% else %}
+			ZEND_ARG_TYPE_INFO({{ byref }}, {{ argname }}, {{ arg.zval_type }}, {{ byref }})
+		{% endif %}
+	{% endif %}
 {% endfor %}
 ZEND_END_ARG_INFO()
 {% endfor %}

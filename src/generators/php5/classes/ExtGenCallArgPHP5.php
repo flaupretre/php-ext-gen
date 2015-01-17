@@ -15,11 +15,8 @@ class ExtGenCallArgPHP5 extends ExtGenCallArg
 
 //----- Properties
 
-public $vars;	// array('type' => C type, 'ext' => C name extension)
 public $parse_format;
 public $parse_arguments;	// array of name extensions
-public $receive_zval;
-public $zval_type;
 
 //---------
 
@@ -30,7 +27,7 @@ parent::__construct($function,$def);
 
 //----------
 // Prepare data for code generation. When logic is complex, it is easier to
-// do it in PHP.
+// do it in PHP than in twig.
 
 public function prepare()
 {
@@ -38,17 +35,59 @@ parent::prepare();
 
 //----
 
-$vars=array();
 $parse_format='';
 $parse_arguments=array();
-$receive_zval=false;
 $scalar_format='';
 $scalar_arguments=array();
-$zval_type=0;
+
+if ($this->mixed || $this->zval)
+	{
+	$parse_format='z';
+	$parse_arguments=array('_zval');
+	}
+else
+	{
+	switch($this->type)
+		{
+		case 'bool':
+			$parse_format='b';
+			$parse_arguments=array('bval');
+			break;
+
+		case 'int':
+			$parse_format='l';
+			$parse_arguments=array('ival');
+			break;
+
+		case 'double':
+			$parse_format='d';
+			$parse_arguments=array('zval');
+			break;
+
+		case 'array':
+			$parse_format='a';
+			$parse_arguments=array('zval');
+			break;
+
+		case 'array':
+			$parse_format='a';
+			$parse_arguments=array('zval');
+			break;
+
+		case 'array':
+			$parse_format='a';
+			$parse_arguments=array('zval');
+			break;
+
+		case 'array':
+			$parse_format='a';
+			$parse_arguments=array('zval');
+			break;
+
+	}
 
 if ($this->accept_array)
 	{
-	$vars[]=array('eg_array *','_array');
 	$zval_type='EG_IS_ARRAY';
 	}
 if ($this->accept_scalar)
@@ -76,6 +115,12 @@ if ($this->accept_scalar)
 			$scalar_argument[]='_len';
 			break;
 		}
+	}
+
+if ($this->byref)
+	{
+	$parse_format='z';
+	$parse_arguments=array('_zval');
 	}
 
 if (($this->nullok)||($this->mixed)||($this->ref))

@@ -33,7 +33,6 @@ version;        // str
 #---------
 # Definition of a function
 
-return_type:    // str - one of (null,bool,int,double,string,array)
 arguments:      // array of call argument definitions
 
 #---------
@@ -41,7 +40,7 @@ arguments:      // array of call argument definitions
 
 <arg-name>:     // arr
   type:         // str - one of (bool,int,double,string,array) or mixed/[a_scalar_type]
-  [ref]:        // bool - pass by ref ? Default: false
+  [byref]:      // bool - pass by ref ? Default: false
   [nullok]:     // bool - Default: false
-  [default]:    // str - must be null if type is array or mixed.
-                //       If not set (default case), the argument is required
+  [optional]:	// bool
+  [default]:    // str - If not set, a value of 0 or NULL is used

@@ -15,14 +15,11 @@ abstract class ExtGenFunction
 
 //----- Properties
 
-private static $return_types=array('null','bool','int','double','string','array');
-
 public $name;
 public $filename;
 public $dest_filename;
 
 public $arguments;
-public $return_type;
 public $user_code;
 public $required_args_count;	// Count of non-optionala args
 public $args_count;
@@ -61,13 +58,6 @@ else
 $this->user_code=trim($user_code)."\n";
 $def=$gen->parser->decode($meta);
 
-$return_type=ExtGen::optional_element($def,'return_type');
-if (is_null($return_type)) $return_type='null';
-$return_type=strtolower($return_type);
-if (array_search($return_type,self::$return_types)===false)
-	throw new Exception("$return_type: Unsupported function return type");
-$this->return_type=$return_type;
-
 // Args
 
 $argsdef=ExtGen::optional_element($def,'arguments');
@@ -82,7 +72,8 @@ foreach($argsdef as $argname => $argdef)
 	PHO_Display::trace("Defining argument $argname");
 	if (array_key_exists($argname,$this->arguments))
 		throw new Exception("$argname: Argument already defined");
-	$obj=new $class($this,$argdef);
+	try { $obj=new $class($this,$argdef); }
+	catch(Exception $e) { throw new Exception($e->getMessage." (argument: $argname)"); }
 	if ($obj->optional) $seen_optional=true;
 	else
 		{

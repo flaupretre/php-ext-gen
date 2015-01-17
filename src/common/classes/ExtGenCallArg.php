@@ -17,83 +17,95 @@ abstract class ExtGenCallArg
 
 private static $scalar_types=array('bool','int','double','string');
 
+public $type;				// 'zval', 'array', scalar type, or 'mixed/<scalar_type>
+public $byref;				// bool - pass by ref ?
 
-public $ref;			// true -> pass by ref ; false -> by value
-public $scalar_type;	// Scalar type
-public $accept_array;
-public $accept_scalar;
-public $mixed;			// shortcut for (accept_array && accept_scalar)
-public $nullok;			// accept null and transmit to function body ?
-public $optional;		// bool
-public $default;		// Default value
+public $zval=false;			// Arg is bare zval ?
 
-public $func;			// Object - extends ExtGenFunction
+public $accept_array=false;
+public $accept_scalar=false;
+public $scalar_type=false;	// Scalar type (string)
+public $mixed=false;		// shortcut for (accept_array && accept_scalar)
+public $nullok=false;		// accept null and transmit to function body ?
+
+public $optional=false;		// bool
+public $default=null;	// Default value: null or C string to insert in code
+
+public $func;				// Function this arg belongs to
 
 //---------
 
 public function __construct($function,$def)
 {
-$this->function=$function;
+$this->func=$function;
 
-$this->ref=ExtGen::optional_element($def,'ref');
-if (is_null($this->ref)) $this->ref=false;
+$this->byref=ExtGen::optional_element($def,'byref');
+if (is_null($this->byref)) $this->byref=false;
 
-$type=strtolower(ExtGen::element($def,'type'));
-if (substr($type,0,6)=='mixed/')
-	{
-	$this->accept_array=true;
-	$this->accept_scalar=true;
-	$this->mixed=true;
-	$scalar_type=substr($type,6);
-	self::check_scalar_type($scalar_type);
-	$this->scalar_type=$scalar_type;
-	}
-elseif($type=='array')
-	{
-	$this->accept_array=true;
-	$this->accept_scalar=false;
-	$this->mixed=false;
-	$this->scalar_type=null;
-	}
-else
-	{
-	$this->accept_array=false;
-	$this->accept_scalar=true;
-	$this->mixed=false;
-	self::check_scalar_type($type);
-	$this->scalar_type=$type;
-	}
+$nullok_supported=false;
 
-$this->nullok=ExtGen::optional_element($def,'nullok');
-if (is_null($this->nullok)) $this->nullok=false;
+$this->optional=ExtGen::optional_element($def,'optional');
+if (is_null($this->optional)) $this->optional=false;
 
 $default=ExtGen::optional_element($def,'default');
-if (is_null($default))
+
+$this->type=$type=strtolower(ExtGen::element($def,'type'));
+
+switch($type)
 	{
-	$this->optional=false;
+	case 'zval':
+		$this->zval=true;
+		if (!is_null($default)) throw new Exception('A zval argument cannot have a default value');
+		break;
+
+	case'bool':
+	case'int':
+	case'double':
+		$this->accept_scalar=true;
+		$this->scalar_type=$type;
+		break;
+
+	case'string':
+		$nullok_supported=true;
+		$this->accept_scalar=true;
+		$this->scalar_type='bool';
+		break;
+
+	case'array':
+		$nullok_supported=true;
+		$this->accept_array=true;
+		if (!is_null($default)) throw new Exception('An array argument cannot have a default value');
+		break;
+
+	case'array|bool':
+	case'array|int':
+	case'array|double':
+	case'array|string':
+		$nullok_supported=true;
+		$this->accept_array=$this->accept_scalar=true;
+		$this->scalar_type=substr($type,6);
+		break;
+
+	default:
+		throw new Exception("$type: Unsupported argument type");
 	}
-else
-	{
-	$this->optional=true;
-	if (strtolower($default==='null')) $default=null;
-	if (($this->accept_array)&&(!is_null($default)))
-		throw new Exception('When an arg can be an array, its default value must be null');
-	$this->default=$default;
-	}
+
+//---
+	
+$nullok=ExtGen::optional_element($def,'nullok');
+if (is_null($nullok)) $nullok=false;
+if ($nullok && (! $nullok_supported))
+	throw new Exception("nullok can be set for this argument type ($type)");
+$this->nullok=$nullok;
+
+$this->default=$default;
+
 }
 
 //-----
 
 protected function prepare()
 {
-}
-
-//-----
-
-private static function check_scalar_type($type)
-{
-if (array_search($type,self::$scalar_types)===false)
-	throw new Exception("$type: Invalid argument scalar type");
 }
 
 //============================================================================
