@@ -1,23 +1,21 @@
 /* Defines function {{ func.name }} */
 
-{% block user_header %}
-{% endblock user_header %}
+{% block user_header %}{% endblock %}
 
 /*---------------------------------------------------------------------*/
 /* Internal function */
 
 static void extgen_func_{{ func.name }}(
-struct _eg_func_retval_struct *eg_ret
+_EG_FUNC_RETVAL *eg_ret
 , int _eg_num_set_args
-{% for argname in func.arguments|keys %}
-, _eg_func_argument_struct *{{ argname }}
+{% for argname,arg in func.arguments %}
+	, {{ (arg.type=="zval") ? "zval" : "_EG_FUNC_ARGUMENT" }} *{{ argname }}
 {% endfor %} )
 {	/*---- Function body */
 
 { /* Enclose in braces because of argument declarations */
-{% block user_body %}
-{% endblock user_body %}
-} /* Here, we must return immediately as return can be done from inside body %}
+{% block user_body %}{% endblock %}
+} {# Here, we must return immediately as return can be done from inside body #}
 }
 
 /*---------------------------------------------------------------------*/
@@ -25,53 +23,46 @@ struct _eg_func_retval_struct *eg_ret
 
 PHP_FUNCTION({{ func.name }})
 {
-struct eg_retval_struct eg_ret_s;
-int _eg_num_set_args;
+_EG_FUNC_RETVAL eg_ret_s; /* Return value */
 {% for argname in func.arguments|keys %}
-_eg_func_argument_struct {{ argname }}_s;
-{% endfor %} )
-{% block user_external_func_declarations %}
-{% endblock user_external_func_declarations %}
+_EG_FUNC_EXTERNAL_ARGUMENT {{ argname }}_es;
+{% endfor %}
+{% block user_external_func_declarations %}{% endblock %}
 
 /* Init extgen local variables */
 
-_eg_num_set_args=ZEND_NUM_ARGS();
 _EG_FUNC_TYPE_INIT(&eg_ret_s);
-{% for argname in func.arguments|keys %}
-{{ argname }}_s.is_unset=EG_FALSE;
-{{ argname }}_s.is_null=EG_FALSE;
-{{ argname }}_s.outzp=(zval *)0;
-_EG_FUNC_TYPE_INIT(&{{ argname }}_s);
-{% endfor %} )
-{% block user_external_post_init %}
-{% endblock user_external_post_init %}
+
+{% block user_external_post_init %}{% endblock %}
 
 /* Parse arguments */
 
 {% include 'argument_parsing.twig.c' %}
 
+	/*---- Call internal function */
 	{ /* Enclose in braces because of possible argument declarations */
 
-	/*---- Call internal function */
-
-	{% block user_external_pre_call %}
-	{% endblock user_external_pre_call %}
+	{% block user_external_pre_call %}{% endblock %}
 
 		{ /* Enclose in braces because of possible argument declarations */
 		extgen_func_{{ func.name }}(
 			  &eg_ret_s
-			, _eg_num_set_args
-			{% for argname in func.arguments|keys %}, &{{ argname }}_s{% endfor %} )
+			, (int)ZEND_NUM_ARGS()
+			{% for argname,arg in func.arguments %}
+				{% if (arg.type=="zval") %}
+					, {{ argname }}_es.zp
+				{% else %}
+					, &({{ argname }}_es.i)
+				{% endif %}
+			{% endfor %} );
 		}
 
-	{% block user_external_post_call %}
-	{% endblock user_external_post_call %}
+	{% block user_external_post_call %}{% endblock %}
 	}
 
 {% block compute_return_values %}
 {% include 'compute_return_values.twig.c' %}
 {% endblock compute_return_values %}
 
-{% block user_external_end %}
-{% endblock user_external_end %}
+{% block user_external_end %}{% endblock %}
 }

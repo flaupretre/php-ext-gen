@@ -1,28 +1,25 @@
 # A complex test case for php-ext-gen
 
-# string dummy1_func1(mixed/bool $arg1, double &$arg2, string &$arg3
-#				, [mixed/string &$arg4="foo"])
+# string dummy1_func1(array|bool $arg1, double &$arg2, string &$arg3
+#				, [string &$arg4="foo"])
 
 arguments:
   arg1:
-    type: mixed/string
-    nullok: true
+    type: array|bool
   arg2:
     type: double
-    ref: true	
+    byref: true	
   arg3:
     type: string
-    ref: true
-    nullok: true
+    byref: true
   arg4:
     type: string
-    ref: true
-    nullok: true
+    byref: true
     default: foo
 
 #------------------------------ Function code ------------------------------
 
-{% block body %}
+{% block user_body %}
 /* Unnecessarily complicated function body */
 
 time_t t;
@@ -30,7 +27,7 @@ time_t t;
 /* Print arg1 type and value */
 /* arg1 can be array, bool, or null */
 
-if(arg1_is_null) {	/* Check if null */
+if(arg1->_is_null) {	/* Check if null */
 	printf("arg1 is null\n");
 }
 else if (arg1_array) {	/* Check if array */
@@ -69,13 +66,13 @@ if(arg4_is_null) {	/* Check if null */
 }
 
 EG_FUNC_ARG_STRING_REALLOC(arg4, 100);
-strcpy(arg4,"string to return");
-printf("arg4 - new length is %d\n",arg4_len); /* Display 100 */
+strcpy(arg4->sval,"string to return");
+printf("arg4 - new length is %d\n",arg4->slen); /* Display 100 */
 
 /* Now, return value */
 /* Not thread-safe, but that's just a prototype :) */
 
 t=time((time_t *)0);
-EG_FUNC_RET_STRING(ctime(&t),1);
+EG_FUNC_RETURN_STRING(ctime(&t),1);
 
 {% endblock body %}

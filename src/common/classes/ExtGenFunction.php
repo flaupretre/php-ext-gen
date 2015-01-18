@@ -22,7 +22,6 @@ public $dest_filename;
 public $arguments;
 public $user_code;
 public $required_args_count;	// Count of non-optionala args
-public $args_count;
 
 public $gen;
 
@@ -63,7 +62,7 @@ $def=$gen->parser->decode($meta);
 $argsdef=ExtGen::optional_element($def,'arguments');
 if (is_null($argsdef)) $argsdef=array();
 $this->arguments=array();
-$this->args_count=$this->required_args_count=0;
+$this->required_args_count=0;
 if (!is_array($argsdef)) throw new Exception('Function arguments must be an array');
 $seen_optional=false;
 $class=$this->gen->getclass('CallArg');
@@ -82,7 +81,6 @@ foreach($argsdef as $argname => $argdef)
 		$this->required_args_count++;
 		}
 	$this->arguments[$argname]=$obj;
-	$this->args_count++;
 	}
 }
 

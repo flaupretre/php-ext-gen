@@ -67,13 +67,11 @@
 
 </table>
 
-When an argument sets 'nullok', a variable named <i>var</i>\_is\_null is created. It contains a value != 0 if null was set for this arg. In this case, the 'normal' variables are null or 0.
-
 # Function return value
 
-There is no restriction on function return value type. The function code can implement its own logic to return any supported value type.
+There is no restriction on function return value type. The function code can implement its own logic to return any supported value type. You should execute one of this macro only once per function execution. When called several times, only the first call sets the value. Subsequent calls are ignored (TODO implement this protection).
 
-Pre-defined macros are used from user body code the return value. These macros can be used several times, only the last call will set the return value. They also take care of releasing the memory theu could have allocated in a previous execution (in the same function execution).
+Pre-defined macros are called from user code to set the return value.
 
 <table>
 <tr>
@@ -123,7 +121,7 @@ Never set a null dup value for string literals !
 <tr>
 <td>EG_FUNC_RETVAL_ARRAY(val,dup)</td>
 <td>Sets an array return value. This array must contain zval elements only<p>
-As with strings, the array wan be duplicated using a non-null dup parameter.</td>
+As with strings, the array can be duplicated by setting a non-null dup parameter.</td>
 </tr>
 </table>
 
@@ -132,30 +130,30 @@ Another set of macros exists. Their names are derived from the macros listed abo
 
 # Function arguments
 
-Supported types, with possible options :
+## Types ##
 
 <table>
 <tr>
 <th>Type</th>
-<th>Supports<br>nullok</td>
+<th>Supports<br>pass<br>by ref</td>
 <th>Supports<br>default<br>value</td>
 <th>Possible<br>default<br>values</td>
-<th>Implicit<br>default<br>value</td>
+<th>Built-in<br>default<br>value</td>
 <th>Comments</td>
 </tr>
 
 <tr>
 <td>zval</td>
+<td>Yes</td>
 <td>No</td>
-<td>No</td>
-<td>&nbsp;</td>
-<td>&nbsp</td>
+<td></td>
+<td></td>
 <td>Used to delegate (yet) unsupported type management to user code</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td>No</td>
+<td>Yes</td>
 <td>Yes</td>
 <td>EG_TRUE/<br>EG_FALSE</td>
 <td>False</td>
@@ -164,7 +162,7 @@ Supported types, with possible options :
 
 <tr>
 <td>int</td>
-<td>No</td>
+<td>Yes</td>
 <td>Yes</td>
 <td>Integer</td>
 <td>0</td>
@@ -173,7 +171,7 @@ Supported types, with possible options :
 
 <tr>
 <td>double</td>
-<td>No</td>
+<td>Yes</td>
 <td>Yes</td>
 <td>Numeric</td>
 <td>0</td>
@@ -199,8 +197,17 @@ Supported types, with possible options :
 </tr>
 
 <tr>
+<td>array|null</td>
+<td>No</td>
+<td>No</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
 <td>array|{bool/int/double/string}</td>
-<td>Yes</td>
+<td>No <sup>(1)</sup></</td>
 <td>Yes</td>
 <td>Same as 2nd member</td>
 <td>Same as 2nd member</td>
@@ -208,35 +215,183 @@ Supported types, with possible options :
 </tr>
 </table>
 
-Every argument types can be passed by reference or by value.
+## Macros
 
 A set of macros, similar to the macros used to set the return value, are used to set the
-returned value of arguments passed by ref:
+returned value of arguments passed by ref.
+
+<b>Notes:</b>
+
+* When an argument is passed by ref, the returned value can have any type.
+
+* When an argument is passed by value, it is considered read-only. Using one of the macros below with a passed-by-val argument will do nothing.
+
+<table>
+<tr>
+<th>Macro</th>
+</tr>
+
+<tr>
+<td>EG_FUNC_ARG_NULL(arg)</td>
+</tr>
+
+<tr>
+<td>EG_FUNC_ARG_BOOL(arg,bool)</td>
+</tr>
+
+<tr>
+<td>EG_FUNC_ARG_FALSE(arg)<br>EG_FUNC_ARG_TRUE(arg)</td>
+</tr>
+<tr>
+<td>EG_FUNC_ARG_INT(arg,int)</td>
+</tr>
+
+<tr>
+<td>EG_FUNC_ARG_DOUBLE(arg,double)</td>
+</tr>
+
+<tr>
+<td>EG_FUNC_ARG_STRINGL(arg,str, len, dup)</td>
+</tr>
+
+<tr>
+<td>EG_FUNC_ARG_STRING(arg,str, dup)</td>
+</tr>
+
+<tr>
+<td>EG_FUNC_ARG_ARRAY(arg,val,dup)</td>
+</tr>
+</table>
+
+## Accessing argument values
+
+The function body receives a pointer for each function argument. This pointer has the same name as the name the argument was declared with.
+
+* For arguments declared with type 'zval', the argument is a 'zval *'. The user code is totally responsible of the way it uses this zval. If the argument is passed by ref, the user code can change the value of this zval.
+
+* For other declared types, the transmitted argument is a pointer to a structure containing 'decoded fields'. Depending on the argument type, the user code can use the following fields :
+
+<table>
+<tr>
+<th>field</th>
+<th>Type</th>
+<th>Comments</th>
+</tr>
+
+<tr>
+<td>type</td>
+<td>eg_type<br>(numeric)</td>
+<td>One of EG_IS_NULL, EG_IS_BOOL, EG_IS_INT, EG_IS_DOUBLE, EG_IS_STRING, EG_IS_ARRAY<p>Used in case of mixed types. Using this field, you can determine which argument type was passed to the function.<p>
+Example: If argument type is 'array|string', this field can be equal to EG_IS_ARRAY or EG_IS_STRING. Depending on this value, you will access the corresponding fields below.<p>
+When argument type is not mixed, this field is provided but useless as you already know the type of your argument, so you which field to access.</td>
+</tr>
+
+<tr>
+<td>bval</td>
+<td>eg_bool</td>
+<td>
+The value of a boolean argument</td>
+</tr>
+
+<tr>
+<td>ival</td>
+<td>eg_int</td>
+<td>
+The value of an integer argument</td>
+</tr>
+
+<tr>
+<td>dval</td>
+<td>eg_double</td>
+<td>
+The value of a double argument</td>
+</tr>
+
+<tr>
+<td>sval</td>
+<td>eg_string</td>
+<td>
+The address of a dynamically-allocated memory buffer containing a string argument (always null-terminated)</td>
+</tr>
+
+<tr>
+<td>slen</td>
+<td>eg_str_size</td>
+<td>
+String size</td>
+</tr>
+
+<tr>
+<td>aval</td>
+<td>eg_array</td>
+<td>
+A pointer to an array</td>
+</tr>
+
+<tr>
+<td>is_unset</td>
+<td>eg_bool</td>
+<td>
+This field is true only if the argument is optional AND was not set when the function was called. In this case, the structure already contains a default value (defined by the user or built-in).<p>
+This field can be used, for instance, to decide if we must compute a complex default value (one to complex to set in the function definition).</td>
+</tr>
+
+</table>
+
+# Examples
+
+The examples below show sample function definition file. A function definition file, as its name implies, defines a function. Its name is '<function-name>.func.c'. It contains everything related to the function.
+
+A simple 'bridge' function taken from the newt extension :
+
+	#PHP prototype:
+	#    int newt_centered_window(int $width, int $height [, string $title=null ])
+	#
+	# No need for an explicit default value for 'title', as our default for string
+	# is a NULL pointer and this is the same in newt.
+	#---------------------------------------------------------------------------- 
+
+	arguments:
+	  width:
+	    type: int
+	  height:
+	    type: int
+	  title:
+	    type: string
+		optional: true 
+
+	{% block body %}
+	int ret;
+
+	ret=newtCenteredWindow((long)(width->ival),(long)(height->ival),title->sval);
+	EG_FUNC_RETURN_INT(ret);
+	{% endblock %}
 
 
+A minimal function taking no argument and always returning null:
 
+	# void newt_bell()
+	# This function has no metadata to define, as it has no argument
+	
+	{% block body %}
+	newt_Bell();
+	{% endblock %}
 
+A dummy function taking 2 arguments of type 'double', one by ref, and the second by value. It replaces the first argument with the product of both args. Useless but illustrates pass-by-ref.
 
+	#PHP: void dummy_mult(&$var1, $var2)
+	
+	arguments:
+	  var1:
+	    type: double
+	    byref: true
+	  var2:
+	    type: double
 
+	{% block body %}
+	/* Could be written in one line with no intermediate var... */
+	double ret;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	ret = var1->dval * var2->dval;
+	EG_FUNC_ARG_DOUBLE(var1, ret); // set var1 returned value
+	{% endblock %}

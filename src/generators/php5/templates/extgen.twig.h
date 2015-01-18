@@ -28,7 +28,7 @@ typedef zend_uchar	eg_type;
 #define EG_FALSE	(eg_bool)0
 
 /*---------------------------------------------------------------*/
-/*--- retval structure */
+/*--- Multi-type pseudo-structure - applies to arguments and retval */
 
 #define _EG_TYPE_VARS \
 	eg_type type; \
@@ -39,23 +39,13 @@ typedef zend_uchar	eg_type;
 	eg_str_size slen; \
 	eg_array aval;
 
-struct _eg_func_argument_struct
-	{
-	eg_bool is_unset;
-	eg_bool is_null;
-	zval *outzp;
-	_EG_TYPE_VARS
-	}
-
-struct _eg_func_retval_struct
-	{
-	_EG_TYPE_VARS
-	}
-
+/* _EG_FUNC_TYPE_xx */
 /* _tp is a pointer to the structure containing the _EG_TYPE_VARS */
 
+#define _EG_FUNC_TYPE_SET_TYPE(_tp,_type) { (_tp)->type=_type; }
+
 #define _EG_FUNC_TYPE_INIT(_tp) \
-	(_tp)->type=EG_IS_NULL; \
+	_EG_FUNC_TYPE_SET_TYPE(_tp,EG_IS_NULL); \
 	(_tp)->bval=FALSE; \
 	(_tp)->ival=(eg_int)0; \
 	(_tp)->dval=(eg_double)0; \
@@ -63,59 +53,110 @@ struct _eg_func_retval_struct
 	(_tp)->slen=(eg_str_size)0; \
 	(_tp)->aval=NULL;
 
-#define EG_FUNC_RETVAL_NULL() \
-	{ \
-	if (eg_ret->type != EG_IS_NULL) \
-		{ \
-		switch (eg_ret->type) \
-			{ \
-			case EG_IS_STRING: \
-				eg_allocate(eg_ret->sval,0); \
-				break; \
-			case EG_IS_ARRAY: \
-				eg_array_free(eg_ret->aval); \
-				break; \
-			} \
-		_EG_FUNC_TYPE_INIT(eg_ret); \
-		} \
-	} \
+#define eg_array_efree(arr)	(void)zend_hash_destroy(arr)
+#define EG_ARRAY_EFREE(arr) { eg_array_efree(arr); arr=(eg_array)0; }
 
-#define EG_FUNC_RETVAL_BOOL(val)	{ EG_FUNC_RETVAL_NULL(); eg_ret->type=EG_IS_BOOL ; eg_ret->bval=(val); }
-#define EG_FUNC_RETVAL_INT(val)	{ EG_FUNC_RETVAL_NULL(); eg_ret->type=EG_IS_INT ; eg_ret->ival=(val); }
-#define EG_FUNC_RETVAL_DOUBLE(val)	{ EG_FUNC_RETVAL_NULL(); eg_ret->type=EG_IS_DOUBLE ; eg_ret->dval=(val); }
+#define _EG_FUNC_TYPE_EFREE(_tp) \
+	{ \
+	switch (_tp->type) \
+		{ \
+		case EG_IS_STRING: \
+			eg_allocate(_tp->sval,0); \
+			break; \
+		case EG_IS_ARRAY: \
+			eg_array_free(_tp->aval); \
+			break; \
+		} \
+	}
+
+#define _EG_FUNC_TYPE_NULL(_tp) \
+	{ \
+	if (_tp->type != EG_IS_NULL) \
+		{ \
+		_EG_FUNC_TYPE_EFREE(_tp); \
+		_EG_FUNC_TYPE_INIT(_tp); \
+		} \
+	}
+	
+#define   _EG_FUNC_TYPE_BOOL(_tp,val) { _EG_FUNC_TYPE_NULL(_tp); _EG_FUNC_TYPE_SET_TYPE(_tp,EG_IS_BOOL); _tp->bval=(eg_bool)(val); }
+
+#define _EG_FUNC_TYPE_FALSE(_tp) _EG_FUNC_TYPE_BOOL(_tp,EG_FALSE)
+#define  _EG_FUNC_TYPE_TRUE(_tp) _EG_FUNC_TYPE_BOOL(_tp,EG_TRUE)
+
+#define    _EG_FUNC_TYPE_INT(_tp,val) { _EG_FUNC_TYPE_NULL(_tp); _EG_FUNC_TYPE_SET_TYPE(_tp,EG_IS_INT); _tp->ival=(eg_int)(val); }
+#define _EG_FUNC_TYPE_DOUBLE(_tp,val) { _EG_FUNC_TYPE_NULL(_tp); _EG_FUNC_TYPE_SET_TYPE(_tp,EG_IS_DOUBLE); _tp->dval=(eg_double)(val); }
 
 /* (len) must be referenced only once (can be strlen()) */ \
-#define EG_FUNC_RETVAL_STRINGL(str, len, dup) \
+#define _EG_FUNC_TYPE_STRINGL(_tp, str, len, dup) \
 	{ \
-	EG_FUNC_RETVAL_NULL(); \
-	eg_ret->slen = len; \
-	eg_ret->sval = ((dup) ? eg_eduplicate(str,eg_ret->slen) : (str)); \
-	eg_ret->type=EG_IS_STRING; \
+	_EG_FUNC_TYPE_NULL(_tp); \
+	_tp->slen = (eg_str_size)len; \
+	_tp->sval = (eg_string)((dup) ? eg_eduplicate(str,_tp->slen) : (str)); \
+	_EG_FUNC_TYPE_SET_TYPE(_tp,EG_IS_STRING); \
 	}
 
-#define EG_FUNC_RETVAL_STRING(str, dup) EG_FUNC_RETVAL_STRINGL(str, strlen(str), dup)
+#define _EG_FUNC_TYPE_STRING(_tp,str,dup) _EG_FUNC_TYPE_STRINGL(_tp,str,strlen(str),dup)
 
-#define EG_FUNC_RETVAL_ARRAY(val,dup) \
+#define _EG_FUNC_TYPE_ARRAY(_tp,val,dup) \
 	{ \
-	EG_FUNC_RETVAL_NULL(); \
-	eg_ret->aval=((dup) ? _eg_zval_array_duplicate(val) : (val) \
-	eg_ret->type=EG_IS_ARRAY ; \
+	_EG_FUNC_TYPE_NULL(); \
+	_tp->aval=((dup) ? _eg_zval_array_duplicate(val) : (val) \
+	_EG_FUNC_TYPE_SET_TYPE(_tp,EG_IS_ARRAY); \
 	}
 
-#define EG_FUNC_RETVAL_FALSE()		EG_FUNC_RETVAL_BOOL(EG_FALSE)
-#define EG_FUNC_RETVAL_TRUE()		EG_FUNC_RETVAL_BOOL(EG_TRUE)
+/* EG_FUNC_RETVAL_xx */
+
+typedef struct 
+	{
+	_EG_TYPE_VARS
+	} _EG_FUNC_RETVAL;
+
+#define EG_FUNC_RETVAL_NULL()					_EG_FUNC_TYPE_NULL(eg_ret)
+#define EG_FUNC_RETVAL_BOOL(val)				_EG_FUNC_TYPE_BOOL(eg_ret,val)
+#define EG_FUNC_RETVAL_FALSE()  				_EG_FUNC_TYPE_FALSE(eg_ret,)
+#define EG_FUNC_RETVAL_TRUE()   				_EG_FUNC_TYPE_TRUE(eg_ret,)
+#define EG_FUNC_RETVAL_INT(val) 				_EG_FUNC_TYPE_INT(eg_ret,val)
+#define EG_FUNC_RETVAL_DOUBLE(val)				_EG_FUNC_TYPE_DOUBLE(eg_ret,val)
+#define EG_FUNC_RETVAL_STRINGL(str, len, dup)	_EG_FUNC_TYPE_STRINGL(eg_ret,str, len, dup)
+#define EG_FUNC_RETVAL_STRING(str, dup)			_EG_FUNC_TYPE_STRING(eg_ret,str, dup)
+#define EG_FUNC_RETVAL_ARRAY(val,dup)			_EG_FUNC_TYPE_ARRAY(eg_ret,val,dup)
+
+/* EG_FUNC_RETURN_xx */
 
 #define EG_FUNC_RETURN_NULL()				{ EG_FUNC_RETVAL_NULL(); return; }
 #define EG_FUNC_RETURN_BOOL(val)			{ EG_FUNC_RETVAL_BOOL(val); return; }
+#define EG_FUNC_RETURN_FALSE()				{ EG_FUNC_RETVAL_FALSE(); return; }
+#define EG_FUNC_RETURN_TRUE()				{ EG_FUNC_RETVAL_TRUE(); return; }
 #define EG_FUNC_RETURN_INT(val)				{ EG_FUNC_RETVAL_INT(val); return; }
 #define EG_FUNC_RETURN_DOUBLE(val)			{ EG_FUNC_RETVAL_DOUBLE(val); return; }
 #define EG_FUNC_RETURN_STRINGL(str,len,dup)	{ EG_FUNC_RETVAL_STRINGL(str,len,dup); return; }
 #define EG_FUNC_RETURN_STRING(str,dup)		{ EG_FUNC_RETVAL_STRING(str,dup); return; }
 #define EG_FUNC_RETURN_ARRAY(val,dup)		{ EG_FUNC_RETVAL_ARRAY(val,dup); return; }
 
-#define eg_array_efree(arr)	(void)zend_hash_destroy(arr)
+/* EG_FUNC_ARG_xx */
 
-#define EG_ARRAY_EFREE(arr) { eg_array_efree(arr); arr=NULL; }
+typedef struct
+	{
+	eg_bool is_unset;
+	eg_bool _writable;
+	_EG_TYPE_VARS
+	} _EG_FUNC_ARGUMENT;
+
+typedef struct 
+	{
+	zval *zp;
+	_EG_FUNC_ARGUMENT i;
+	} _EG_FUNC_EXTERNAL_ARGUMENT;
+
+#define EG_FUNC_ARG_NULL(argp)				   	{ if (argp->_writable) {_EG_FUNC_TYPE_NULL(argp)} }
+#define EG_FUNC_ARG_BOOL(argp,val)			   	{ if (argp->_writable) {_EG_FUNC_TYPE_BOOL(argp,val)} }
+#define EG_FUNC_ARG_FALSE(argp)  			    { if (argp->_writable) {_EG_FUNC_TYPE_FALSE(argp,)} }
+#define EG_FUNC_ARG_TRUE(argp)   			   	{ if (argp->_writable) {_EG_FUNC_TYPE_TRUE(argp,)} }
+#define EG_FUNC_ARG_INT(argp,val) 			    { if (argp->_writable) {_EG_FUNC_TYPE_INT(argp,val)} }
+#define EG_FUNC_ARG_DOUBLE(argp,val)			{ if (argp->_writable) {_EG_FUNC_TYPE_DOUBLE(argp,val)} }
+#define EG_FUNC_ARG_STRINGL(argp,str, len, dup) { if (argp->_writable) {_EG_FUNC_TYPE_STRINGL(argp,str, len, dup)} }
+#define EG_FUNC_ARG_STRING(argp,str, dup)	    { if (argp->_writable) {_EG_FUNC_TYPE_STRING(argp,str, dup)} }
+#define EG_FUNC_ARG_ARRAY(argp,val,dup)			{ if (argp->_writable) {_EG_FUNC_TYPE_ARRAY(argp,val,dup)} }
 
 /*---------------------------------------------------------------*/
 /*---- Memory management */
@@ -361,6 +402,8 @@ typedef struct {
 #define EG_Z_DVAL_P(zp)         Z_DVAL_P(zp)
 #define EG_Z_STRVAL(z)          Z_STRVAL(z)
 #define EG_Z_STRVAL_P(zp)       Z_STRVAL_P(zp)
+#define EG_Z_STRLEN(z)          Z_STRLEN(z)
+#define EG_Z_STRLEN_P(zp)       Z_STRLEN_P(zp)
 #define EG_Z_ARRVAL(z)          Z_ARRVAL(z)
 #define EG_Z_ARRVAL_P(zp)       Z_ARRVAL_P(zp)
 
@@ -397,6 +440,7 @@ typedef struct {
 #define EG_ZVAL_ENSURE_LONG(zp) { if (EG_Z_TYPE_P((zp))!=EG_IS_INT) convert_to_long((zp)); }
 #define EG_ZVAL_ENSURE_DOUBLE(zp) { if (EG_Z_TYPE_P((zp))!=EG_IS_DOUBLE) convert_to_double((zp)); }
 #define EG_ZVAL_ENSURE_STRING(zp) { if (EG_Z_TYPE_P((zp))!=EG_IS_STRING) convert_to_string((zp)); }
+#define EG_ZVAL_ENSURE_ARRAY(zp) { if (EG_Z_TYPE_P((zp))!=EG_IS_ARRAY) convert_to_array((zp)); }
 
 /*---------------------------------------------------------------*/
 /*--- API numbers for each minor version */
@@ -468,5 +512,6 @@ static void *_eg_allocate(void *ptr, size_t size, int persistent);
 static void *_eg_duplicate(void *ptr, size_t size, int persistent);
 static HashTable *_eg_zval_array_duplicate(HashTable *source_ht);
 static int _eg_extension_is_loaded(char *name TSRMLS_DC);
+static void _eg_convert_arg_zp_to_scalar(eg_type target_type,zval *zp,_EG_FUNC_ARGUMENT *ip);
 
 /*============================================================================*/

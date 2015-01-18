@@ -8,6 +8,6 @@ arguments:
   text:
     type: string
 
-{% block body %}
-newtDrawRootText ((long)left, (long)top, text);
+{% block user_body %}
+newtDrawRootText((long)(left->ival),(long)(top->ival), text->sval);
 {% endblock %}
