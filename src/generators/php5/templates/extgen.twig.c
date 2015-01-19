@@ -83,9 +83,9 @@ switch(target_type)
 		_EG_FUNC_TYPE_INT(ip,EG_Z_IVAL_P(zp));
 		break;
 
-	case EG_IS_DOUBLE:
-		EG_ZVAL_ENSURE_DOUBLE(zp);
-		_EG_FUNC_TYPE_DOUBLE(ip,EG_Z_DVAL_P(zp));
+	case EG_IS_FLOAT:
+		EG_ZVAL_ENSURE_FLOAT(zp);
+		_EG_FUNC_TYPE_FLOAT(ip,EG_Z_FVAL_P(zp));
 		break;
 
 	case EG_IS_STRING:

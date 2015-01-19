@@ -13,7 +13,7 @@
 class ExtGenConstant
 {
 
-private static $supported_types=array('null','bool','int','double','string');
+private static $supported_types=array('null','bool','int','float','string');
 
 //----- Properties
 

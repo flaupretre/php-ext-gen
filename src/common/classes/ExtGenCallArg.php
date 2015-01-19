@@ -13,13 +13,13 @@
 //		- zval
 //		- bool
 //		- int
-//		- double
+//		- float
 //		- string
 //		- array
 //		- array|null
 //		- array|bool
 //		- array|int
-//		- array|double
+//		- array|float
 //		- array|string
 //============================================================================
 
@@ -28,7 +28,7 @@ class ExtGenCallArg
 
 //----- Properties
 
-private static $scalar_types=array('bool','int','double','string');
+private static $scalar_types=array('bool','int','float','string');
 
 public $name;
 public $type;
@@ -75,7 +75,7 @@ switch($type)
 
 	case'bool':
 	case'int':
-	case'double':
+	case'float':
 	case'string':
 		$this->accept_scalar=true;
 		$this->scalar_type=$type;
@@ -91,7 +91,7 @@ switch($type)
 
 	case'array|bool':
 	case'array|int':
-	case'array|double':
+	case'array|float':
 	case'array|string':
 		$this->accept_array=$this->accept_scalar=true;
 		$this->scalar_type=substr($type,6);

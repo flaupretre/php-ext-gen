@@ -1,3 +1,5 @@
+# php-ext-gen Package Specification File
+#---------------------------------------------------------------------
 
 set flags # -s -c gzip
 

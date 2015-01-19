@@ -31,8 +31,8 @@
 
 <tr>
 <td>double</i></td>
-<td>eg_double</i></td>
-<td>dval</td>
+<td>eg_float</i></td>
+<td>fval</td>
 <td>double</td>
 <td>double</td>
 <td>?</td>
@@ -100,8 +100,8 @@ Pre-defined macros are called from user code to set the return value.
 </tr>
 
 <tr>
-<td>EG_FUNC_RETVAL_DOUBLE(double)</td>
-<td>Sets a double return value</td>
+<td>EG_FUNC_RETVAL_FLOAT(float)</td>
+<td>Sets a floating-point numeric return value</td>
 </tr>
 
 <tr>
@@ -170,7 +170,7 @@ Another set of macros exists. Their names are derived from the macros listed abo
 </tr>
 
 <tr>
-<td>double</td>
+<td>float</td>
 <td>Yes</td>
 <td>Yes</td>
 <td>Numeric</td>
@@ -206,7 +206,7 @@ Another set of macros exists. Their names are derived from the macros listed abo
 </tr>
 
 <tr>
-<td>array|{bool/int/double/string}</td>
+<td>array|{bool/int/float/string}</td>
 <td>No <sup>(1)</sup></</td>
 <td>Yes</td>
 <td>Same as 2nd member</td>
@@ -247,7 +247,7 @@ returned value of arguments passed by ref.
 </tr>
 
 <tr>
-<td>EG_FUNC_ARG_DOUBLE(arg,double)</td>
+<td>EG_FUNC_ARG_FLOAT(arg,float)</td>
 </tr>
 
 <tr>
@@ -281,7 +281,7 @@ The function body receives a pointer for each function argument. This pointer ha
 <tr>
 <td>type</td>
 <td>eg_type<br>(numeric)</td>
-<td>One of EG_IS_NULL, EG_IS_BOOL, EG_IS_INT, EG_IS_DOUBLE, EG_IS_STRING, EG_IS_ARRAY<p>Used in case of mixed types. Using this field, you can determine which argument type was passed to the function.<p>
+<td>One of EG_IS_NULL, EG_IS_BOOL, EG_IS_INT, EG_IS_FLOAT, EG_IS_STRING, EG_IS_ARRAY<p>Used in case of mixed types. Using this field, you can determine which argument type was passed to the function.<p>
 Example: If argument type is 'array|string', this field can be equal to EG_IS_ARRAY or EG_IS_STRING. Depending on this value, you will access the corresponding fields below.<p>
 When argument type is not mixed, this field is provided but useless as you already know the type of your argument, so you which field to access.</td>
 </tr>
@@ -302,9 +302,9 @@ The value of an integer argument</td>
 
 <tr>
 <td>dval</td>
-<td>eg_double</td>
+<td>eg_float</td>
 <td>
-The value of a double argument</td>
+The value of a floating-point numeric argument</td>
 </tr>
 
 <tr>
@@ -377,21 +377,21 @@ A minimal function taking no argument and always returning null:
 	newt_Bell();
 	{% endblock %}
 
-A dummy function taking 2 arguments of type 'double', one by ref, and the second by value. It replaces the first argument with the product of both args. Useless but illustrates pass-by-ref.
+A dummy function taking 2 arguments of type 'float', one by ref, and the second by value. It replaces the first argument with the product of both args. Useless but illustrates pass-by-ref.
 
 	#PHP: void dummy_mult(&$var1, $var2)
 	
 	arguments:
 	  var1:
-	    type: double
+	    type: float
 	    byref: true
 	  var2:
-	    type: double
+	    type: float
 
 	{% block body %}
 	/* Could be written in one line with no intermediate var... */
-	double ret;
+	eg_float ret;
 
 	ret = var1->dval * var2->dval;
-	EG_FUNC_ARG_DOUBLE(var1, ret); // set var1 returned value
+	EG_FUNC_ARG_FLOAT(var1, ret); // set var1 returned value
 	{% endblock %}
