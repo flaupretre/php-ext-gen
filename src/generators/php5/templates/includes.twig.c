@@ -38,12 +38,13 @@
 #include "zend_execute.h"
 #include "zend_hash.h"
 #include "zend_operators.h"
+#include "zend_constants.h"
 #include "zend_API.h"
 #include "TSRM/TSRM.h"
 #include "SAPI.h"
 #include "php_streams.h"
 #include "ext/standard/php_string.h"
-#include "ext/hash/php_hash.h"
+#include "ext/standard/info.h"
 #include "ext/hash/php_hash.h"
 
 #if ZEND_EXTENSION_API_NO >= PHP_5_5_X_API_NO
@@ -51,5 +52,3 @@
 #else
 #include "TSRM/tsrm_virtual_cwd.h"
 #endif
-
-{# TODO: What is the bare minimum here ? #}

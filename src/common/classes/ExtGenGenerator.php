@@ -229,7 +229,7 @@ try {
 		try	{
 			if (array_key_exists($name,$this->constants))
 				throw new Exception("Constant $name already defined");
-			$this->constants[$name]=new $class($name,$def);
+			$this->constants[$name]=new $class($this,$name,$def);
 			} catch(Exception $e) {	throw new Exception($e->getMessage()." (while defining constant $name)"); }
 		}
 	} catch(Exception $e) { throw new Exception($e->getMessage().' (while reading global definition file)'); }
@@ -251,6 +251,31 @@ foreach($funcnames as $fname)
 // Global data
 
 $this->global_data=new ExtGenGlobalData($this);
+}
+
+//-----
+// Convert metadat immediate value to a string to insert in C code
+//
+// Special syntax for string ('"' chars are interpreted by parser)
+// <string> means formula to insert without '<>'
+// Other values are escaped as literal C strings and encapsulated in '"' chars
+//
+// Special value: '<name>' means to insert the variable name in code.
+
+public function compute_immediate_value($type,$value,$name)
+{
+if ($value==='<name>') return $name;
+
+if ($type=='string')
+	{
+	$len=strlen($value);
+	if (($len>2) && (substr($value,0,1)=='<') && substr($value,$len-1,1)=='>')
+		$value=substr($value,1,$len-2);
+	else $value='"'.str_replace
+		(array("\\","'",'"'),array("\\\\","\\'",'\\"'),$value).'"';
+	}
+
+return $value;
 }
 
 //-----

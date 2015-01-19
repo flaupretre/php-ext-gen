@@ -6,10 +6,10 @@ macros:
     need: required
   const-int: &int-named-const
     type: int
-    computed: use-name
+    value: <name>
   const-string: &string-named-const
     type: string
-    computed: use-name
+    value: <name>
 
 #---------
 

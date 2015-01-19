@@ -5,7 +5,7 @@ ZEND_BEGIN_MODULE_GLOBALS({{ name }})
 struct timeval _eg_base_tp;
 #endif
 
-{{ global_data.module_globals_code }}
+{% block user_module_globals_data %}{% endblock %}
 
 ZEND_END_MODULE_GLOBALS({{ name }})
 
@@ -30,11 +30,9 @@ ZEND_DECLARE_MODULE_GLOBALS({{ name }})
 
 static void {{ name }}_globals_ctor(zend_{{ name }}_globals * globals TSRMLS_DC)
 {
-{% if global_data.module_globals_init_code != "" %}
-{{ global_data.module_globals_init_code }}
-{% else %}
-CLEAR_DATA(*globals); /* Init everything to 0/NULL */
-{% endif %}
+EG_CLEAR_DATA(*globals); /* Init everything to 0/NULL */
+
+{% block user_module_globals_init %}{% endblock %}
 }
 
 /*------------------------*/
@@ -44,7 +42,7 @@ CLEAR_DATA(*globals); /* Init everything to 0/NULL */
 #ifndef ZTS
 static void {{ name }}_globals_dtor(zend_{{ name }}_globals * globals TSRMLS_DC)
 {
-{{ global_data.module_globals_dtor_code }}
+{% block user_module_globals_dtor %}{% endblock %}
 }
 #endif
 

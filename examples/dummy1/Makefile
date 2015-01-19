@@ -16,7 +16,7 @@ include ../../make.common
 
 #-----------------------------------------------------------------------------
 
-.PHONY: all clean
+.PHONY: all clean test compile base install
 
 all: base
 
@@ -34,6 +34,9 @@ $(COMPILE_TARGET): $(TARGETS)
 	cd gen && phpize && ./configure && make
 
 install: $(COMPILE_TARGET)
+	$(MAKE) -C gen $@
+
+test: $(COMPILE_TARGET)
 	$(MAKE) -C gen $@
 
 #-----------------------------------------------------------------------------

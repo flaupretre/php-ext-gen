@@ -3,7 +3,7 @@
 {# TODO Declare CZVALs #}
 {# TODO Declare HKEYs #}
 
-static void build_constant_values()
+static void _eg_build_{{ name }}_constant_values()
 {
 {# TODO #}
 }

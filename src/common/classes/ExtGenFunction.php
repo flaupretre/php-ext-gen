@@ -71,8 +71,8 @@ foreach($argsdef as $argname => $argdef)
 	PHO_Display::trace("Defining argument $argname");
 	if (array_key_exists($argname,$this->arguments))
 		throw new Exception("$argname: Argument already defined");
-	try { $obj=new $class($this,$argdef); }
-	catch(Exception $e) { throw new Exception($e->getMessage." (argument: $argname)"); }
+	try { $obj=new $class($this,$argname,$argdef); }
+	catch(Exception $e) { throw new Exception($e->getMessage()." (argument: $argname)"); }
 	if ($obj->optional) $seen_optional=true;
 	else
 		{

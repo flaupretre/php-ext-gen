@@ -13,54 +13,37 @@
 class ExtGenConstant
 {
 
-private static $supported_types=array('null','bool','int','double','string','array');
+private static $supported_types=array('null','bool','int','double','string');
 
 //----- Properties
 
+private $gen;
+
+public $name;
 public $type;
-public $computed=false;	// if true, value is a formula, not a literal string.
-public $value=null;
+public $value;
 
 //---------
 
-public function __construct($name,$def)
+public function __construct($gen,$name,$def)
 {
 if (!is_array($def)) throw new Exception('Constant definition must be an array');
 
-$type=strtolower(ExtGen::element($def,'type'));
+$this->name=$name;
+$this->gen=$gen;
+
+$type=ExtGen::element($def,'type');
 if (array_search($type,self::$supported_types)===false)
 	throw new Exception("$type: Unsupported type in constant definition");
 $this->type=$type;
 
-$this->computed=false;
-if (($type==='null')
-	&& ((ExtGen::optional_element($def,'computed')!==null)
-		|| (ExtGen::optional_element($def,'value')!==null)))
-	{
-	throw new Exception('computed and value params must not be set in a null constant definition');
-	}
+$this->value=$gen->compute_immediate_value($type,ExtGen::element($def,'value'),$name);
+}
 
-$computed=ExtGen::optional_element($def,'computed');
-switch($computed)
-	{
-	case 'use-name':
-		$this->computed=true;
-		$this->value=$name;
-		break;
-	case true:
-	case 'true':
-		$this->computed=true;
-		$this->value=ExtGen::element($def,'value');
-		break;
-	case false:
-	case null:
-	case 'false':
-		$this->computed=false;
-		$this->value=ExtGen::element($def,'value');
-		break;
-	default:
-		throw new Exception("$computed: Invalid value for 'computed' param");
-	}
+//---------
+
+public function prepare()
+{
 }
 
 //============================================================================

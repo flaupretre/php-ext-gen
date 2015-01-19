@@ -3,7 +3,7 @@
 macros:
   standard-int-const: &standard-int-const
     type: int
-    computed: use-name
+    value: <name>
 
 #---------
 

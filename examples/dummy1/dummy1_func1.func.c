@@ -22,51 +22,42 @@ arguments:
 {% block user_body %}
 /* Unnecessarily complicated function body */
 
+eg_str_val p;
 time_t t;
 
 /* Print arg1 type and value */
 /* arg1 can be array, bool, or null */
 
-if(arg1->_is_null) {	/* Check if null */
-	printf("arg1 is null\n");
-}
-else if (arg1_array) {	/* Check if array */
+if (arg1->type==EG_IS_ARRAY) {	/* Check if array */
 	printf("arg1 is an array\n");
-} else {	/* Not null, not array, we know it's a bool */
-	printf("arg1 is bool, value=%d\n",arg1);
+} else {	/* Not array, we know it's a bool */
+	printf("arg1 is bool, value=%d\n",arg1->bval);
 }
 
 /* Print arg2, and modify value (pass by ref) */
-/* No need to check for null, as nullok is false */
 
-printf("Received arg2 is %f\n",arg2);
-arg2 *= 3;
-printf("Returned arg2 is %f\n",arg2);
+printf("Received arg2 is %f\n",arg2->dval);
+EG_FUNC_ARG_DOUBLE(arg2,arg2->dval * 3);
+printf("Returned arg2 is %f\n",arg2->dval);
 
 /* Print arg3, reallocate for a bigger string and display again */
 
 {
-char *p="I need space, more SPACE !!!";
+p="I need space, more SPACE !!!";
 
-printf("Received arg3 is <%s> (length=%d)\n",arg3,arg3_len);
-EG_ARG_STRING_REPLACE(arg3, p);
-strcpy(arg3,p);
-printf("Returned arg3 is <%s>",arg3,arg3_len);
+printf("Received arg3 is <%s> (length=%d)\n",arg3->sval,arg3->slen);
+EG_FUNC_ARG_STRING(arg3, p, 1);
+printf("Returned arg3 is <%s> (length=%d)\n",arg3->sval,arg3->slen);
 }
 
-/* Print arg4 and replace it with a string */
-/* Here, we use another macro to get memory for the new string */
-/* Note that, even if received type is array, it is replaced by a string */
-/* without leaking memory nor exposing zval API */
+/* Arg 4 */
 
-if(arg4_is_null) {	/* Check if null */
-	printf("arg4 is null\n");
-} else {	/* Not null, we know it's a string */
-	printf("arg4 is a string, value=<%s>\n",arg4);
-}
+printf("Received arg4 is <%s> (length=%d)\n",arg4->sval,arg4->slen);
 
-EG_FUNC_ARG_STRING_REALLOC(arg4, 100);
-strcpy(arg4->sval,"string to return");
+p=eg_eallocate(NULL,101);
+strcpy(p,"string to return");
+EG_FUNC_ARG_STRINGL(arg4, p, 100, 0);
+
 printf("arg4 - new length is %d\n",arg4->slen); /* Display 100 */
 
 /* Now, return value */
@@ -75,4 +66,4 @@ printf("arg4 - new length is %d\n",arg4->slen); /* Display 100 */
 t=time((time_t *)0);
 EG_FUNC_RETURN_STRING(ctime(&t),1);
 
-{% endblock body %}
+{% endblock user_body %}

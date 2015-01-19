@@ -1,32 +1,22 @@
 
 /* Compute return value */
 
-switch(eg_ret_s.type)
-	{
-	case EG_IS_NULL:
-		break;
+_EG_FUNC_TYPE_TO_ZVAL(return_value,&_eg_retval_s);
 
-	case EG_IS_BOOL:
-		EG_ZVAL_BOOL(return_value, eg_ret_s.bval);
-		break;
+/* Compute passed-by-ref returned values */
 
-	case EG_IS_INT:
-		EG_ZVAL_INT(return_value, eg_ret_s.ival);
-		break;
+{% if func.arguments|length != 0 %}
+{
+zval *zp;
+_EG_FUNC_ARGUMENT *ip;
 
-	case EG_IS_DOUBLE:
-		EG_ZVAL_DOUBLE(return_value, eg_ret_s.dval);
-		break;
-
-	case EG_IS_STRING:
-		EG_ZVAL_STRINGL(return_value, eg_ret_s.sval,eg_ret_s.slen,0);
-		break;
-
-	case EG_IS_ARRAY:
-		EG_ZVAL_ARRAY(return_value, eg_ret_s.aval);
-		break;
-	}
-
-/* Compute pass-by-ref returned values */
-
-/* TODO */
+{% for argname,arg in func.arguments if (arg.type!="zval") %}
+	{% if (arg.byref) %}
+		zp={{ argname }}_es.zp;
+		ip=&({{ argname }}_es.i);
+		EG_ZVAL_NULL(zp); /* Free previous data */
+		_EG_FUNC_TYPE_TO_ZVAL(zp,ip);
+	{% endif %}
+{% endfor %} {# foreach arg if arg.type != zval #}
+}
+{% endif %} {# if count(args) != 0 #}

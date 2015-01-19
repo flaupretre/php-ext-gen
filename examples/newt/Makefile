@@ -1,14 +1,14 @@
 #==============================================================================
 
 # In a real extension, not bundled with the code generation software, this
-# variable would contain the location of the php-ext-gen.phk file
+# should be modified to contain the location of the php-ext-gen.phk file
 
 PHP_EXT_GEN_PKG = ../../php-ext-gen.phk
 
 #-----------------
 
 EXTENSION = newt
-TARGETS = gen
+TARGETS = gen/extgen_php_$(EXTENSION).c
 COMPILE_TARGET = gen/modules/$(EXTENSION).la
 
 include ../../make.vars
@@ -16,23 +16,27 @@ include ../../make.common
 
 #-----------------------------------------------------------------------------
 
-.PHONY: all clean
+.PHONY: all clean test compile base install
 
 all: base
 
 clean: clean_base
+	/bin/rm -rf gen
 
-base: gen
+base: $(TARGETS)
 
-gen:
+$(TARGETS):
 	mkdir gen && $(PHPCMD) $(PHP_EXT_GEN_PKG) build
 
 compile: $(COMPILE_TARGET)
 
-$(COMPILE_TARGET): gen
+$(COMPILE_TARGET): $(TARGETS)
 	cd gen && phpize && ./configure && make
 
-install: compile
+install: $(COMPILE_TARGET)
+	$(MAKE) -C gen $@
+
+test: $(COMPILE_TARGET)
 	$(MAKE) -C gen $@
 
 #-----------------------------------------------------------------------------

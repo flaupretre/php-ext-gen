@@ -11,15 +11,15 @@ _EG_FUNC_ARGUMENT *ip;
 /*---- Zend-parse arguments ------------------*/
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "{{ func.parse_format }}"
-	{% for argname in func.arguments|keys %}, &({{ argname }}_es.zp){% endfor %}
+	{% for arg in func.arguments %}, &({{ arg.name }}_es.zp){% endfor %}
 	) == FAILURE) return;
 
 /*-- Process arguments */
 /* Do nothing on bare zvals */
 
-{% for argname,arg in func.arguments if (arg.type!="zval") %}
-zp={{ argname }}_es.zp;
-ip=&({{ argname }}_es.i);
+{% for arg in func.arguments if (arg.type!="zval") %}
+zp={{ arg.name }}_es.zp;
+ip=&({{ arg.name }}_es.i);
 
 _EG_FUNC_TYPE_INIT(ip);
 if ({{ loop.index }} > ZEND_NUM_ARGS())
@@ -32,11 +32,13 @@ if ({{ loop.index }} > ZEND_NUM_ARGS())
 
 	{% if arg.default is not null %}
 		{% if (arg.scalar_type=='string') %}
-			_EG_FUNC_TYPE_{{ arg.default|upper }}(ip,({{ arg.default }}));
-		{% else %}
 			{ /* Use tmp string because formula must run once only */
-			eg_string tmp_string={{ arg.default }}
+			eg_str_val tmp_string={{ arg.default }};
 			_EG_FUNC_TYPE_STRING(ip,tmp_string,1);
+			}
+		{% else %}
+			{
+			_EG_FUNC_TYPE_{{ arg.scalar_type|upper }}(ip,({{ arg.default }}));
 			}
 		{% endif %}
 	{% endif %} {# Arg defines default #}
@@ -54,7 +56,7 @@ else
 			if ((EG_Z_TYPE_P(zp)==EG_IS_ARRAY)||{{ (arg.type=='array' ? 1 : 0) }})
 				{ /* Write array */
 				EG_ZVAL_ENSURE_ARRAY(zp);
-				_EG_FUNC_TYPE_ARRAY(ip,EG_Z_ARRVAL_P(zp),0 /* ? dup=0/1 a voir ? */)
+				_EG_FUNC_TYPE_ARRAY(ip,EG_Z_ARRVAL_P(zp),0); /* ? dup=0/1 a voir ? */
 				}
 			else
 				{ /* mixed receiving scalar */
@@ -67,7 +69,7 @@ else
 		}
 	else
 		{
-		_EG_FUNC_TYPE_SET_TYPE(ip,EG_{{ arg.nulltype|upper }});
+		_EG_FUNC_TYPE_SET_TYPE(ip,EG_IS_{{ arg.nulltype|upper }});
 		}
 {% endif %}
 	}

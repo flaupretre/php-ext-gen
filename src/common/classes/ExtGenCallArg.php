@@ -30,6 +30,7 @@ class ExtGenCallArg
 
 private static $scalar_types=array('bool','int','double','string');
 
+public $name;
 public $type;
 public $byref;				// bool - pass by ref ?
 
@@ -50,8 +51,9 @@ public $func;				// Function this arg belongs to
 
 //---------
 
-public function __construct($function,$def)
+public function __construct($function,$name,$def)
 {
+$this->name=$name;
 $this->func=$function;
 
 $this->byref=ExtGen::optional_element($def,'byref');
@@ -99,18 +101,9 @@ switch($type)
 		throw new Exception("$type: Unsupported argument type");
 	}
 
-// Special syntax for default string ('"' chars are interpreted by parser)
-// <string> means formula to insert without '<>'
-// Other values are escaped as literal C strings and encapsulated in '"' chars
-
-if ((!is_null($this->default))&&($this->scalar_type=='string'))
-	{
-	$len=strlen($this->default);
-	if (($len>2) && (substr($this->default,0,1)=='<') && substr($this->default,$len-1,1)=='>')
-		$this->default=substr($this->default,1,$len-2);
-	else $this->default='"'.str_replace
-		(array("\\","'",'"'),array("\\\\","\\'",'\\"'),$this->default).'"';
-	}
+if (!is_null($this->default))
+	$this->default=$this->func->gen->compute_immediate_value($this->scalar_type
+		,$this->default,$name);
 }
 
 //-----

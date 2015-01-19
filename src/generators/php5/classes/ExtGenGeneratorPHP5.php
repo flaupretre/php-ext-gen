@@ -48,6 +48,7 @@ public function prepare()
 parent::prepare();
 
 foreach($this->functions as $func) $func->prepare();
+foreach($this->constants as $const) $const->prepare();
 foreach($this->extra_files as $file) $file->prepare();
 }
 
@@ -58,12 +59,30 @@ public function generate()
 {
 PHO_Display::info('Generating...');
 
+/* Generate function files */
+
 foreach($this->functions as $func) $func->generate();
+
+/* Expand and copy extra files */
+
 foreach($this->extra_files as $file) $file->generate();
 
-$this->renderer->render_to_file('main.twig.c','extgen_php_'.$this->name.'.c');
+/* Build and write main file */
+
+$buf=$this->optional_file_contents('global.twig.c');
+$res=$this->renderer->render_string('global.twig.c'
+	,"{% extends 'main.twig.c' %}\n".$buf);
+$this->write_file('extgen_php_'.$this->name.'.c',$res);
+
+/* Build and write autoconf-related stuff */
 
 $this->renderer->render_to_file('config.twig.m4','config.m4');
+
+/* Copy tests, if any */
+
+$test_dir=$this->source_dir.'/tests';
+if (is_dir($test_dir))
+	PHO_File::recursive_copy($test_dir,$this->dest_dir.'/tests');
 }
 
 //============================================================================

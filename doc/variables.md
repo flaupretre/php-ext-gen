@@ -40,7 +40,7 @@
 
 <tr>
 <td>string pointer</td>
-<td>eg_string</td>
+<td>eg_str_val</td>
 <td>sval</td>
 <td>char *</td>
 <td>char *</td>
@@ -49,7 +49,7 @@
 
 <tr>
 <td>string size</td>
-<td>eg_str_size</td>
+<td>eg_str_len</td>
 <td>slen</td>
 <td>int</td>
 <td>size_t</td>
@@ -309,14 +309,14 @@ The value of a double argument</td>
 
 <tr>
 <td>sval</td>
-<td>eg_string</td>
+<td>eg_str_val</td>
 <td>
 The address of a dynamically-allocated memory buffer containing a string argument (always null-terminated)</td>
 </tr>
 
 <tr>
 <td>slen</td>
-<td>eg_str_size</td>
+<td>eg_str_len</td>
 <td>
 String size</td>
 </tr>

@@ -48,7 +48,7 @@ static HashTable *_eg_zval_array_duplicate(HashTable *source_ht)
 HashTable *dest_ht;
 zval *tmp;
 
-dest_ht=(HashTable *)eallocate(NULL,sizeof(HashTable));
+dest_ht=(HashTable *)eg_eallocate(NULL,sizeof(HashTable));
 zend_hash_init(dest_ht, zend_hash_num_elements(source_ht), NULL, ZVAL_PTR_DTOR, 0);
 zend_hash_copy(dest_ht, source_ht, (copy_ctor_func_t) zval_add_ref, (void *) &tmp, sizeof(zval *));
 dest_ht->nNextFreeElement = source_ht->nNextFreeElement;
@@ -62,7 +62,7 @@ static int _eg_extension_is_loaded(char *name TSRMLS_DC)
 int status;
 
 status=zend_hash_exists(&module_registry, name, strlen(name)+1);
-DBG_MSG2("Checking if extension %s is loaded: %s",name,(status ? "yes" : "no"));
+EG_DBG_MSG2("Checking if extension %s is loaded: %s",name,(status ? "yes" : "no"));
 return status;
 }
 

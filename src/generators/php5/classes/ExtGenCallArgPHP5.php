@@ -17,9 +17,9 @@ class ExtGenCallArgPHP5 extends ExtGenCallArg
 
 //---------
 
-public function __construct($function,$def)
+public function __construct($function,$name,$def)
 {
-parent::__construct($function,$def);
+parent::__construct($function,$name,$def);
 }
 
 //----------

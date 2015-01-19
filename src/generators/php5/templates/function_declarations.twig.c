@@ -7,12 +7,12 @@
 
 {%  for func in functions %}
 ZEND_BEGIN_ARG_INFO_EX(arginfo_func_{{ func.name }}, 0, 0, {{ func.required_args_count }})
-{% for argname,arg in func.arguments %}
+{% for arg in func.arguments %}
 	{% set byref_string=(arg.byref ? '1' : '0') %}
 	{% if (arg.type=='array') %}
-		ZEND_ARG_ARRAY_INFO({{ byref_string }}, {{ argname }}, {{ nullok }})
+		ZEND_ARG_ARRAY_INFO({{ byref_string }}, {{ arg.name }}, {{ nullok }})
 	{% else %}
-		ZEND_ARG_INFO({{ byref_string }}, {{ argname }})
+		ZEND_ARG_INFO({{ byref_string }}, {{ arg.name }})
 	{% endif %}
 {% endfor %}
 ZEND_END_ARG_INFO()
