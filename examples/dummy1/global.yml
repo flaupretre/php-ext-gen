@@ -2,8 +2,6 @@
 # This is a dummy extension to test php-ext-gen
 
 macros:
-  required: &required
-    need: required
   const-int: &int-named-const
     type: int
     value: <name>
@@ -14,6 +12,8 @@ macros:
 #---------
 
 name: dummy1
+
+version: 0.0.1
 
 autoconf:
 #TODO

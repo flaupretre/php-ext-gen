@@ -184,6 +184,8 @@ try {
 	$this->name=$name;
 	$this->uname=strtoupper($name);
 
+	$this->version=ExtGen::element($data,'version');
+
 	//--- Flags
 
 	$flags=ExtGen::optional_element($data,'flags');
