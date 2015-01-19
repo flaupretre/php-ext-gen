@@ -9,4 +9,5 @@ resources
 
 classes
 
+Abstract ini parameters
 

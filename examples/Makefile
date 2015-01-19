@@ -1,7 +1,7 @@
 #
 #==============================================================================
 
-SUBDIRS = newt dummy1
+SUBDIRS = newt dummy1 scream
 
 include ../make.vars
 include ../make.common
