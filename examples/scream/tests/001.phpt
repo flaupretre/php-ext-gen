@@ -16,9 +16,8 @@ ini_set('scream.enabled', 1);
 $foo = @$bar2;
 ini_set('scream.enabled', 0);
 $foo = @$bar3;
-
-echo "--DONE--";
 ?>
+==DONE==
 --EXPECTF--
 Notice: Undefined variable: bar2 in %s on line %d
---DONE--
+==DONE==

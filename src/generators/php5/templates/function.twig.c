@@ -37,7 +37,10 @@ _EG_FUNC_TYPE_INIT(&_eg_retval_s);
 
 /* Parse arguments */
 
+{# This block allows user code to compute context-dependant default values #}
+{% block user_pre_argument_parsing %}{% endblock %}
 {% include 'argument_parsing.twig.c' %}
+{% block user_post_argument_parsing %}{% endblock %}
 
 	/*---- Call internal function */
 	{ /* Enclose in braces because of possible argument declarations */

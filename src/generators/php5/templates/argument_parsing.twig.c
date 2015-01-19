@@ -1,7 +1,3 @@
-{% block argument_parsing %}
-
-{# Allow user code to compute context-dependant default values #}
-{% block user_pre_argument_parsing %}{% endblock %}
 
 {% if func.arguments|length != 0 %}
 {
@@ -78,7 +74,3 @@ else
 {% endif %} {# if count(args) != 0 #}
 
 /*----------------------------------------------------------------------*/
-
-{% block user_post_argument_parsing %}{% endblock %}
-
-{% endblock argument_parsing %}

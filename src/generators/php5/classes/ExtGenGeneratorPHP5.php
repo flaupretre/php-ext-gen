@@ -69,9 +69,8 @@ foreach($this->extra_files as $file) $file->generate();
 
 /* Build and write main file */
 
-$buf=$this->optional_file_contents('global.twig.c');
-$res=$this->renderer->render_string('global.twig.c'
-	,"{% extends 'main.twig.c' %}\n".$buf);
+$buf="{% extends 'main.twig.c' %}\n".$this->optional_file_contents('global.twig.c');
+$res=$this->renderer->render_string('global.twig.c',$buf);
 $this->write_file('extgen_php_'.$this->name.'.c',$res);
 
 /* Build and write autoconf-related stuff */
