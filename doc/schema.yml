@@ -19,6 +19,7 @@ ini:
       default:		// str - Use 0/1 for bool
       [access]:		// str - default: PHP_INI_ALL
       [var]:		// Var in module globals - default: ini name
+      [modify]:		// String - Modify callback
 
 [extra_files]:
   <filename>:

@@ -14,10 +14,10 @@ class ExtGenIniSetting
 {
 
 private static $info=array(
-	 'bool'   => array('vartype' => 'eg_bool'   , 'def' => '0', 'cbk' => 'OnUpdateBool')
-	,'int'    => array('vartype' => 'eg_int'    , 'def' => '0', 'cbk' => 'OnUpdateLong')
-	,'float'  => array('vartype' => 'eg_float'  , 'def' => '0', 'cbk' => 'OnUpdateDouble')
-	,'string' => array('vartype' => 'eg_str_val', 'def' => '' , 'cbk' => 'OnUpdateString')
+	 'bool'   => array('vartype' => 'eg_bool'   , 'def' => '0', 'modify' => 'OnUpdateBool')
+	,'int'    => array('vartype' => 'eg_int'    , 'def' => '0', 'modify' => 'OnUpdateLong')
+	,'float'  => array('vartype' => 'eg_float'  , 'def' => '0', 'modify' => 'OnUpdateDouble')
+	,'string' => array('vartype' => 'eg_str_val', 'def' => '' , 'modify' => 'OnUpdateString')
 	);
 
 //----- Properties
@@ -30,7 +30,7 @@ public $type;		// {bool,int,float,string}
 public $default;
 public $access;		// String
 public $vartype;	// String
-public $cbk;		// String
+public $modify;		// String - Modify callback
 public $std_macro;	// STD_PHP_INI_xxx macro to use
 
 //---------
@@ -53,7 +53,9 @@ $this->access=ExtGen::optional_element($def,'access');
 if (is_null($this->access)) $this->access='PHP_INI_ALL';
 
 $this->vartype=$info['vartype'];
-$this->cbk=$info['cbk'];
+
+$this->modify=ExtGen::optional_element($def,'modify');
+if (is_null($this->modify)) $this->modify=$info['modify'];
 
 $this->std_macro='STD_PHP_INI_'.(($this->type=='bool') ? 'ENTRY' : 'BOOLEAN');
 }
