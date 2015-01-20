@@ -6,7 +6,19 @@
 name:           //str
 version;        // str
 
+flags:
+  minfo_displays_ini: // bool - whether minfo displays ini entries
+
 [autoconf]:     // <TODO>
+
+ini:
+  minfo:			// bool
+  settings:
+    <name>:
+      type:			// str - {bool,int,float,string}
+      default:		// str - Use 0/1 for bool
+      [access]:		// str - default: PHP_INI_ALL
+      [var]:		// Var in module globals - default: ini name
 
 [extra_files]:
   <filename>:

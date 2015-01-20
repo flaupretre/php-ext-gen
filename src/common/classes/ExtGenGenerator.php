@@ -44,6 +44,7 @@ public $extra_files; // array of ExtGenExtraFile instances
 
 public $functions;	// Function table. Array of ExtGenFunctions instances
 public $constants;	// Constant table. Array of ExtGenConstant instances
+public $ini_settings; // Ini settings. Array of ExtGenIniSetting instances
 
 //---------
 
@@ -191,7 +192,7 @@ try {
 	$flags=ExtGen::optional_element($data,'flags');
 	if (is_null($flags)) $flags=array();
 
-	if (!array_key_exists('debug',$flags)) $flags['debug']=false;
+	if (!array_key_exists('minfo_displays_ini',$flags)) $flags['minfo_displays_ini']=false;
 	
 	$this->flags=$flags;
 
@@ -201,6 +202,23 @@ try {
 	if (is_null($def)) $def=array();
 	$class=$this->getclass('Autoconf');
 	$this->autoconf=new $class($def);
+
+	//--- INI settings
+
+	$ini=ExtGen::optional_element($data,'ini');
+	if (is_null($ini)) $ini=array();
+	if (!is_array($ini))
+		throw new Exception("'ini/settings' element must be an array");
+	$this->ini=array();
+	$class=$this->getclass('IniSetting');
+	foreach($ini as $name => $def)
+		{
+		try	{
+			if (array_key_exists($name,$this->ini))
+				throw new Exception("$name: Ini setting already defined");
+			$this->ini_settings[$name]=new $class($this,$name,$def);
+			} catch(Exception $e) {	throw new Exception($e->getMessage()." (while defining '$name' ini setting)"); }
+		}
 
 	//--- Extra files
 	

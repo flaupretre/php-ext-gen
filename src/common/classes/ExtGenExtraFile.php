@@ -17,7 +17,6 @@ class ExtGenExtraFile
 
 public $name;
 public $expand;	// whether to expand contents through twig
-public $contents;
 
 public $gen;	// Generator
 
@@ -31,28 +30,51 @@ $this->gen=$gen;
 
 $this->name=$name;
 
-$expand=ExtGen::optional_element($def,'expand');
-if (is_null($expand)) $expand=false;
-$this->expand=$expand;
-
-$this->contents=$gen->file_contents($name);
+$this->expand=ExtGen::optional_element($def,'expand');
+if (is_null($this->expand)) $this->expand=false;
 }
 
 //---------
-// If expand is set, run contents through twig
 
 public function prepare()
 {
-if ($this->expand)
-	$this->contents=$this->gen->renderer->render_string($this->name,$this->contents);
 }
 
 //---------
 // Create the file in dest dir.
+// If expand is set, run contents through twig
 
 public function generate()
 {
-$this->gen->write_file($this->name,$this->contents);
+$this->recursive_copy('', $this->name);
+}
+
+//---------
+// Recursive copy with expansion if set
+
+public function recursive_copy($rdir,$fname)
+{
+$src=$this->gen->source_dir.'/'.$rdir.$fname;
+$dst=$this->gen->dest_dir.'/'.$rdir.$fname;
+
+if (is_dir($src))
+	{
+    $dir = opendir($src);
+    @mkdir($dst);
+    while(($entry=readdir($dir))!==false)
+		{
+		if (($entry==='.')||($entry==='..')) continue;
+		$this->recursive_copy($rdir.$fname.'/',$entry);
+		}
+	closedir($dir);
+	}
+else
+	{
+	$contents=$this->gen->file_contents($rdir.$fname);
+	if ($this->expand)
+		$contents=$this->gen->renderer->render_string($rdir.$fname,$contents);
+	$this->gen->write_file($rdir.$fname,$contents);
+	}
 }
 
 //============================================================================

@@ -27,6 +27,8 @@ _EG_FUNC_RETVAL _eg_retval_s; /* Return value */
 {% for arg in func.arguments %}
 _EG_FUNC_EXTERNAL_ARGUMENT {{ arg.name }}_es;
 {% endfor %}
+zval **zpp;
+_EG_FUNC_ARGUMENT *ip;
 {% block user_external_func_declarations %}{% endblock %}
 
 /* Init extgen local variables */
@@ -39,7 +41,7 @@ _EG_FUNC_TYPE_INIT(&_eg_retval_s);
 
 {# This block allows user code to compute context-dependant default values #}
 {% block user_pre_argument_parsing %}{% endblock %}
-{% include 'argument_parsing.twig.c' %}
+{% include 'function.argument_parsing.twig.c' %}
 {% block user_post_argument_parsing %}{% endblock %}
 
 	/*---- Call internal function */
@@ -64,7 +66,7 @@ _EG_FUNC_TYPE_INIT(&_eg_retval_s);
 	}
 
 {% block compute_return_values %}
-{% include 'compute_return_values.twig.c' %}
+{% include 'function.compute_return_values.twig.c' %}
 {% endblock compute_return_values %}
 
 {% block user_external_end %}{% endblock %}

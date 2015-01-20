@@ -7,7 +7,7 @@ arguments:
   arg1:
     type: array|bool
   arg2:
-    type: double
+    type: float
     byref: true	
   arg3:
     type: string
@@ -36,9 +36,9 @@ if (arg1->type==EG_IS_ARRAY) {	/* Check if array */
 
 /* Print arg2, and modify value (pass by ref) */
 
-printf("Received arg2 is %f\n",arg2->dval);
-EG_FUNC_ARG_DOUBLE(arg2,arg2->dval * 3);
-printf("Returned arg2 is %f\n",arg2->dval);
+printf("Received arg2 is %f\n",arg2->fval);
+EG_FUNC_ARG_FLOAT(arg2,arg2->fval * 3);
+printf("Returned arg2 is %f\n",arg2->fval);
 
 /* Print arg3, reallocate for a bigger string and display again */
 

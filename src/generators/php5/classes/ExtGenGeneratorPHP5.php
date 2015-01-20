@@ -59,6 +59,13 @@ public function generate()
 {
 PHO_Display::info('Generating...');
 
+/* Transfer common files */
+
+$this->renderer->render_to_file('extgen.compatibility.twig.h','extgen.compatibility.h');
+$this->renderer->render_to_file('extgen.definitions.twig.h','extgen.definitions.h');
+$this->renderer->render_to_file('extgen.includes.twig.h','extgen.includes.h');
+$this->renderer->render_to_file('extgen.lib.twig.c','extgen.lib.c');
+
 /* Generate function files */
 
 foreach($this->functions as $func) $func->generate();

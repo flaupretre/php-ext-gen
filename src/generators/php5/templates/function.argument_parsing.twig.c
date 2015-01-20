@@ -1,8 +1,5 @@
 
 {% if func.arguments|length != 0 %}
-{
-zval *zp;
-_EG_FUNC_ARGUMENT *ip;
 
 /*---- Zend-parse arguments ------------------*/
 
@@ -14,7 +11,7 @@ _EG_FUNC_ARGUMENT *ip;
 /* Do nothing on bare zvals */
 
 {% for arg in func.arguments if (arg.type!="zval") %}
-zp={{ arg.name }}_es.zp;
+zpp=&({{ arg.name }}_es.zp);
 ip=&({{ arg.name }}_es.i);
 
 _EG_FUNC_TYPE_INIT(ip);
@@ -45,21 +42,21 @@ else
 	ip->is_unset=EG_FALSE;
 	ip->_writable={{ (arg.byref ? "EG_TRUE" : "EG_FALSE") }};
 {% if arg.nullok %}
-	if (zp)
+	if (*zpp)
 		{
 {% endif %}
 		{% if (arg.accept_array) %}
-			if ((EG_Z_TYPE_P(zp)==EG_IS_ARRAY)||{{ (arg.type=='array' ? 1 : 0) }})
+			if ((EG_Z_TYPE_PP(zpp)==EG_IS_ARRAY)||{{ (arg.type=='array' ? 1 : 0) }})
 				{ /* Write array */
-				EG_ZVAL_ENSURE_ARRAY(zp);
-				_EG_FUNC_TYPE_ARRAY(ip,EG_Z_ARRVAL_P(zp),0); /* ? dup=0/1 a voir ? */
+				EG_ZVAL_ENSURE_ARRAY(zpp);
+				_EG_FUNC_TYPE_ARRAY(ip,EG_Z_ARRVAL_PP(zpp),0); /* ? dup=0/1 a voir ? */
 				}
 			else
 				{ /* mixed receiving scalar */
-				_eg_convert_arg_zp_to_scalar(EG_IS_{{ arg.scalar_type|upper }},zp,ip);
+				_eg_convert_arg_zpp_to_scalar(EG_IS_{{ arg.scalar_type|upper }},zpp,ip);
 				}
 		{% else %} {# Array not accepted -> scalar only #}
-			_eg_convert_arg_zp_to_scalar(EG_IS_{{ arg.scalar_type|upper }},zp,ip);
+			_eg_convert_arg_zpp_to_scalar(EG_IS_{{ arg.scalar_type|upper }},zpp,ip);
 		{% endif %} {# accept_array #}
 {% if arg.nullok %}
 		}
@@ -70,7 +67,6 @@ else
 {% endif %}
 	}
 {% endfor %} {# foreach arg if arg.type != zval #}
-}
 {% endif %} {# if count(args) != 0 #}
 
 /*----------------------------------------------------------------------*/

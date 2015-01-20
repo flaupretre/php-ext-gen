@@ -42,6 +42,7 @@
 #include "zend_API.h"
 #include "TSRM/TSRM.h"
 #include "SAPI.h"
+#include "php_ini.h"
 #include "php_streams.h"
 #include "ext/standard/php_string.h"
 #include "ext/standard/info.h"

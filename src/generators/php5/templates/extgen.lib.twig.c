@@ -68,29 +68,29 @@ return status;
 
 /*---------------------------------------------------------------*/
 
-static void _eg_convert_arg_zp_to_scalar(eg_type target_type,zval *zp
+static void _eg_convert_arg_zpp_to_scalar(eg_type target_type,zval **zpp
 	,_EG_FUNC_ARGUMENT *ip)
 {
 switch(target_type)
 	{
 	case EG_IS_BOOL:
-		EG_ZVAL_ENSURE_BOOL(zp);
-		_EG_FUNC_TYPE_BOOL(ip,EG_Z_BVAL_P(zp));
+		EG_ZVAL_ENSURE_BOOL(zpp);
+		_EG_FUNC_TYPE_BOOL(ip,EG_Z_BVAL_PP(zpp));
 		break;
 
 	case EG_IS_INT:
-		EG_ZVAL_ENSURE_INT(zp);
-		_EG_FUNC_TYPE_INT(ip,EG_Z_IVAL_P(zp));
+		EG_ZVAL_ENSURE_INT(zpp);
+		_EG_FUNC_TYPE_INT(ip,EG_Z_IVAL_PP(zpp));
 		break;
 
 	case EG_IS_FLOAT:
-		EG_ZVAL_ENSURE_FLOAT(zp);
-		_EG_FUNC_TYPE_FLOAT(ip,EG_Z_FVAL_P(zp));
+		EG_ZVAL_ENSURE_FLOAT(zpp);
+		_EG_FUNC_TYPE_FLOAT(ip,EG_Z_FVAL_PP(zpp));
 		break;
 
 	case EG_IS_STRING:
-		EG_ZVAL_ENSURE_STRING(zp);
-		_EG_FUNC_TYPE_STRINGL(ip,EG_Z_STRVAL_P(zp),EG_Z_STRLEN_P(zp),1);
+		EG_ZVAL_ENSURE_STRING(zpp);
+		_EG_FUNC_TYPE_STRINGL(ip,EG_Z_STRVAL_PP(zpp),EG_Z_STRLEN_PP(zpp),1);
 		break;
 	}
 }

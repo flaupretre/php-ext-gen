@@ -38,7 +38,7 @@ PHO_Display::trace("Defining function $name");
 
 $this->gen=$gen;
 $this->name=$name;
-$this->filename=$name.'.func.c';
+$this->filename='func.'.$name.'.c';
 $this->dest_filename='extgen_'.$this->filename;
 
 $buf=$gen->file_contents($this->filename);

@@ -64,7 +64,7 @@ if (is_null($this->optional)) $this->optional=false;
 
 $this->default=ExtGen::optional_element($def,'default');
 
-$this->type=$type=strtolower(ExtGen::element($def,'type'));
+$this->type=$type=ExtGen::element($def,'type');
 
 switch($type)
 	{

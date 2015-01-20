@@ -1,12 +1,12 @@
-{% include 'common_header.twig.c' %}
+{% include 'common.header.twig.c' %}
 
 /*=======================================================================*/
 /* The main C source file for extension {{ name }} */
 /*=======================================================================*/
 
-{% include 'includes.twig.c' %}
-{% include 'compatibility_macros.twig.h' %}
-{% include 'extgen.twig.h' %}
+#include "extgen.includes.h"
+#include "extgen.compatibility.h"
+#include "extgen.definitions.h"
 
 #define PHP_{{ uname }}_VERSION "{{ version }}"
 #define PHP_{{ uname }}_EXTNAME "{{ name }}"
@@ -21,6 +21,14 @@ ZEND_BEGIN_MODULE_GLOBALS({{ name }})
 #ifdef HAVE_GETTIMEOFDAY
 struct timeval _eg_base_tp;
 #endif
+
+/* Ini variables */
+
+{% for ini in ini_settings %}
+	{{ ini.vartype }} {{ ini.name }};
+{% endfor %}
+
+/* Module variables */
 
 {% block user_module_globals_data %}{% endblock %}
 
@@ -66,12 +74,12 @@ static void {{ name }}_globals_dtor(zend_{{ name }}_globals * globals TSRMLS_DC)
 /*---------------------------------------------------------------*/
 /* Fixed values */
 
-{% include 'fixed_values.twig.c' %}
+{% include 'main.fixed_values.twig.c' %}
 
 /*---------------------------------------------------------------*/
 /* extgen functions */
 
-{% include 'extgen.twig.c' %}
+#include "extgen.lib.c"
 
 /*---------------------------------------------------------------*/
 /*--- Header code */
@@ -81,8 +89,10 @@ static void {{ name }}_globals_dtor(zend_{{ name }}_globals * globals TSRMLS_DC)
 /*---------------------------------------------------------------*/
 /* Ini settings */
 
-{% include 'ini_settings.twig.c' %}
+{% block ini_settings %}
+{% include 'main.ini_settings.twig.c' %}
 {% block user_ini_settings %}{% endblock %}
+{% endblock %}
 
 /*---------------------------------------------------------------*/
 /* Extension functions */
@@ -103,7 +113,11 @@ static void {{ name }}_globals_dtor(zend_{{ name }}_globals * globals TSRMLS_DC)
 
 static PHP_MINFO_FUNCTION({{ name }})
 {
-{% include 'common_minfo_code.twig.c' %}
+{% include 'common.minfo.twig.c' %}
+
+{% if flags.minfo_displays_ini %}
+	DISPLAY_INI_ENTRIES();
+{% endif %}
 
 {% block user_minfo %}{% endblock %}
 }
@@ -144,6 +158,10 @@ ZEND_INIT_MODULE_GLOBALS({{ name }}, {{ name }}_globals_ctor, NULL);
 
 {% block user_minit_post_init_globals %}{% endblock %}
 
+/* Register ini entries */
+
+REGISTER_INI_ENTRIES();
+
 /* Declare constants */
 
 {% block user_minit_pre_constant_declare %}{% endblock %}
@@ -160,6 +178,7 @@ ZEND_INIT_MODULE_GLOBALS({{ name }}, {{ name }}_globals_ctor, NULL);
 
 /*--------*/
 
+{% block user_minit%}{% endblock %}
 {% block user_minit_end %}{% endblock %}
 
 return SUCCESS;
@@ -171,8 +190,14 @@ static PHP_MSHUTDOWN_FUNCTION({{ name }})
 {
 {% block user_mshutdown_pre %}{% endblock %}
 
+/* Unregister ini entries */
+
+UNREGISTER_INI_ENTRIES();
+
+/* Free global data */
+
 #ifndef ZTS
-	{{ name }}_globals_dtor(&{{ name }}_globals TSRMLS_CC);
+{{ name }}_globals_dtor(&{{ name }}_globals TSRMLS_CC);
 #endif
 
 {% block user_mshutdown_post %}{% endblock %}
@@ -183,6 +208,8 @@ return SUCCESS;
 /*---------------------------------------------------------------*/
 /*-- Module definition --*/
 
-{% include 'module_definition.twig.c' %}
+{% include 'main.function_declarations.twig.c' %}
+
+{% include 'main.module_definition.twig.c' %}
 
 /*====================================================================*/

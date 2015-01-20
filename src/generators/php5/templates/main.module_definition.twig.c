@@ -1,6 +1,4 @@
 
-{% include 'function_declarations.twig.c' %}
-
 /*----------------------*/
 
 zend_module_entry {{ name }}_module_entry = {
@@ -8,7 +6,7 @@ zend_module_entry {{ name }}_module_entry = {
 	STANDARD_MODULE_HEADER,
 #endif
 	PHP_{{ uname }}_EXTNAME,
-	extgen_functions,
+	extgen_{{ name }}_functions,
 	PHP_MINIT({{ name }}),
 	PHP_MSHUTDOWN({{ name }}),
 	PHP_RINIT({{ name }}),

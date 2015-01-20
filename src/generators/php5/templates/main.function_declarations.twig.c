@@ -20,7 +20,7 @@ ZEND_END_ARG_INFO()
 
 /*------ Functions --------*/
 
-static zend_function_entry extgen_functions[] = {
+static zend_function_entry extgen_{{ name }}_functions[] = {
 {%  for func in functions %}
     PHP_FE({{ func.name }}, arginfo_func_{{ func.name }})
 {% endfor %}

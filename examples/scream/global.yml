@@ -4,3 +4,10 @@ name: scream
 
 version: 0.1.0
 
+flags:
+  minfo_displays_ini: true
+
+ini:
+  enabled:
+    type: bool
+    default: 0
