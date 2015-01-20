@@ -79,7 +79,7 @@ return $context;
 public function render_to_file($template,$target_file,$context=null)
 {
 $buf=$this->render($template,$context);
-$this->gen->write_file($target_file,$buf);
+$this->gen->file_write($target_file,$buf);
 }
 
 //-----

@@ -301,10 +301,39 @@ return $value;
 //-----
 // Write a file to dest dir
 
-public function write_file($fname,$buf)
+public function file_write($fname,$buf)
 {
 $this->renderer->reset_line_info($buf,$fname);
 file_put_contents($this->dest_dir.'/'.$fname,$buf);
+}
+
+//---------
+// Recursive copy with expansion if set
+
+public function file_copy($rdir,$fname)
+{
+$src=$this->source_dir.'/'.$rdir.$fname;
+$dst=$this->dest_dir.'/'.$rdir.$fname;
+
+if (is_dir($src))
+	{
+    $dir = opendir($src);
+    while(($entry=readdir($dir))!==false)
+		{
+		if (($entry==='.')||($entry==='..')) continue;
+		$this->recursive_copy($rdir.$fname.'/',$entry);
+		}
+	closedir($dir);
+	}
+else
+	{
+	$contents=$this->file_contents($rdir.$fname);
+	if ($this->expand)
+		$contents=$this->gen->renderer->render_string($rdir.$fname,$contents);
+	$ddir=dirname($dst);
+	if (!is_dir($ddir)) @mkdir($ddir,0755,true);
+	$this->file_write($rdir.$fname,$contents);
+	}
 }
 
 //============================================================================

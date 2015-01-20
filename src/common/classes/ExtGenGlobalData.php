@@ -26,7 +26,6 @@ public $config_m4;
 private static $data_files=array(
 	 'header.twig.c' => 'header'
 	,'trailer.twig.c' => 'trailer'
-	,'config.twig.m4' => 'config_m4'
 	);
 
 //---------

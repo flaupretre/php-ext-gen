@@ -78,11 +78,12 @@ foreach($this->extra_files as $file) $file->generate();
 
 $buf="{% extends 'main.twig.c' %}\n".$this->optional_file_contents('global.twig.c');
 $res=$this->renderer->render_string('global.twig.c',$buf);
-$this->write_file('extgen_php_'.$this->name.'.c',$res);
+$this->file_write('extgen_php_'.$this->name.'.c',$res);
 
 /* Build and write autoconf-related stuff */
 
-$this->renderer->render_to_file('config.twig.m4','config.m4');
+if ($this->file_exists('config.m4')) $this->file_copy('','config.m4');
+else $this->renderer->render_to_file('config.twig.m4','config.m4');
 
 /* Copy tests, if any */
 

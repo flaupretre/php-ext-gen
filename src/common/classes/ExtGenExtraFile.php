@@ -46,35 +46,7 @@ public function prepare()
 
 public function generate()
 {
-$this->recursive_copy('', $this->name);
-}
-
-//---------
-// Recursive copy with expansion if set
-
-public function recursive_copy($rdir,$fname)
-{
-$src=$this->gen->source_dir.'/'.$rdir.$fname;
-$dst=$this->gen->dest_dir.'/'.$rdir.$fname;
-
-if (is_dir($src))
-	{
-    $dir = opendir($src);
-    @mkdir($dst);
-    while(($entry=readdir($dir))!==false)
-		{
-		if (($entry==='.')||($entry==='..')) continue;
-		$this->recursive_copy($rdir.$fname.'/',$entry);
-		}
-	closedir($dir);
-	}
-else
-	{
-	$contents=$this->gen->file_contents($rdir.$fname);
-	if ($this->expand)
-		$contents=$this->gen->renderer->render_string($rdir.$fname,$contents);
-	$this->gen->write_file($rdir.$fname,$contents);
-	}
+$this->gen->file_copy('', $this->name);
 }
 
 //============================================================================

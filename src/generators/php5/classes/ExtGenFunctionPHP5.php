@@ -55,7 +55,7 @@ $user_code="{% extends 'function.twig.c' %}\n".$this->user_code;
 
 $buf=$this->gen->renderer->render_string($this->filename,$user_code
 	,array('func' =>$this, 'global' => $this->gen));
-$this->gen->write_file($this->dest_filename,$buf);
+$this->gen->file_write($this->dest_filename,$buf);
 }
 
 //============================================================================
