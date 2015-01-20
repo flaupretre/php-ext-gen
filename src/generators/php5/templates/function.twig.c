@@ -33,7 +33,7 @@ _EG_FUNC_ARGUMENT *ip;
 
 /* Init extgen local variables */
 
-_EG_FUNC_TYPE_INIT(&_eg_retval_s);
+_EG_FUNC_RETVAL_INIT(&_eg_retval_s);
 
 {% block user_external_post_init %}{% endblock %}
 

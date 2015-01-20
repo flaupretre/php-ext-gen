@@ -126,7 +126,7 @@ static PHP_MINFO_FUNCTION({{ name }})
 
 static PHP_RINIT_FUNCTION({{ name }})
 {
-EG_DBG_INIT();
+_EG_DBG_INIT();
 
 {% block user_rinit %}{% endblock %}
 

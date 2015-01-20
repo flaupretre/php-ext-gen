@@ -37,7 +37,8 @@ typedef zend_uchar	eg_type;
 	eg_float fval; \
 	eg_str_val sval; \
 	eg_str_len slen; \
-	eg_array aval;
+	eg_array aval; \
+	int _alloc;
 
 /* _EG_FUNC_TYPE_xx */
 /* _tp is a pointer to the structure containing the _EG_FUNC_TYPE_VARS */
@@ -51,7 +52,8 @@ typedef zend_uchar	eg_type;
 	(_tp)->fval=(eg_float)0; \
 	(_tp)->sval=NULL; \
 	(_tp)->slen=(eg_str_len)0; \
-	(_tp)->aval=NULL;
+	(_tp)->aval=NULL; \
+	(_tp)->_alloc=0;
 
 #define eg_array_efree(arr)	(void)zend_hash_destroy(arr)
 #define EG_ARRAY_EFREE(arr) { eg_array_efree(arr); arr=(eg_array)0; }
@@ -61,12 +63,15 @@ typedef zend_uchar	eg_type;
 	switch (_tp->type) \
 		{ \
 		case EG_IS_STRING: \
-			_tp->sval=eg_eallocate(_tp->sval,0); \
+			if (_tp->_alloc) eg_eallocate(_tp->sval,0); \
+			_tp->sval=NULL; \
 			_tp->slen=0; \
+			_tp->_alloc=0; \
 			break; \
 		case EG_IS_ARRAY: \
-			eg_array_efree(_tp->aval); \
+			if (_tp->_alloc) eg_array_efree(_tp->aval); \
 			_tp->aval=NULL; \
+			_tp->_alloc=0; \
 			break; \
 		} \
 	_EG_FUNC_TYPE_SET_TYPE(_tp,EG_IS_NULL) \
@@ -88,6 +93,7 @@ typedef zend_uchar	eg_type;
 	_tp->slen = (eg_str_len)len; \
 	_tp->sval = (eg_str_val)((dup) ? eg_eduplicate(str,_tp->slen+1) : (str)); \
 	_EG_FUNC_TYPE_SET_TYPE(_tp,EG_IS_STRING); \
+	_tp->_alloc=dup; \
 	}
 
 #define _EG_FUNC_TYPE_STRING(_tp,str,dup) _EG_FUNC_TYPE_STRINGL(_tp,str,strlen(str),dup)
@@ -96,6 +102,7 @@ typedef zend_uchar	eg_type;
 	{ \
 	_tp->aval=((dup) ? _eg_zval_array_duplicate(val) : (val)); \
 	_EG_FUNC_TYPE_SET_TYPE(_tp,EG_IS_ARRAY); \
+	_tp->_alloc=dup; \
 	}
 
 /* EG_FUNC_RETVAL_xx */
@@ -275,7 +282,7 @@ typedef struct {
 	php_printf("<"); \
 	if (_eg_sec) php_printf("%ld/",_eg_sec); \
 	php_printf("%ld> : ",_eg_tp.tv_usec-{{ uname }}_G(_eg_base_tp).tv_usec); \
-	(void)gettimeofday(&{{ uname }}_G(_eg_base_tp),&tz); \
+	(void)gettimeofday(&{{ uname }}_G(_eg_base_tp),&_eg_tz); \
 	}
 
 #else
@@ -293,7 +300,7 @@ typedef struct {
 
 /* If debug mode is off */
 
-#	define EG_DBG_INIT()
+#	define _EG_DBG_INIT()
 #	define EG_DBG_MSG(_format)
 #	define EG_DBG_MSG1(_format,_var1)
 #	define EG_DBG_MSG2(_format,_var1,_var2)

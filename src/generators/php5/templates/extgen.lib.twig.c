@@ -90,7 +90,7 @@ switch(target_type)
 
 	case EG_IS_STRING:
 		EG_ZVAL_ENSURE_STRING(zpp);
-		_EG_FUNC_TYPE_STRINGL(ip,EG_Z_STRVAL_PP(zpp),EG_Z_STRLEN_PP(zpp),1);
+		_EG_FUNC_TYPE_STRINGL(ip,EG_Z_STRVAL_PP(zpp),EG_Z_STRLEN_PP(zpp),0);
 		break;
 	}
 }

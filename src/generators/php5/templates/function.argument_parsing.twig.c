@@ -15,6 +15,7 @@ zpp=&({{ arg.name }}_es.zp);
 ip=&({{ arg.name }}_es.i);
 
 _EG_FUNC_TYPE_INIT(ip);
+ip->_written=0;
 if ({{ loop.index }} > ZEND_NUM_ARGS())
 	{
 	/*--- Arg was not set */
@@ -49,7 +50,7 @@ else
 			if ((EG_Z_TYPE_PP(zpp)==EG_IS_ARRAY)||{{ (arg.type=='array' ? 1 : 0) }})
 				{ /* Write array */
 				EG_ZVAL_ENSURE_ARRAY(zpp);
-				_EG_FUNC_TYPE_ARRAY(ip,EG_Z_ARRVAL_PP(zpp),0); /* ? dup=0/1 a voir ? */
+				_EG_FUNC_TYPE_ARRAY(ip,EG_Z_ARRVAL_PP(zpp),0);
 				}
 			else
 				{ /* mixed receiving scalar */
