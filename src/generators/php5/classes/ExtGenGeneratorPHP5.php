@@ -23,17 +23,6 @@ public function init()
 }
 
 //---------
-// Allows to read specific files from input dir (path in $this->source_dir).
-// If this is not needed, remove this method.
-
-public function read_source_data()
-{
-parent::read_source_data();
-
-// Read flavor-specific data from input dir
-}
-
-//---------
 
 public function output()
 {
@@ -74,7 +63,7 @@ foreach($this->functions as $func) $func->generate();
 
 foreach($this->extra_files as $file) $file->generate();
 
-/* Build and write main file */
+/* Build and write main source file */
 
 $buf="{% extends 'main.twig.c' %}\n".$this->optional_file_contents('global.twig.c');
 $res=$this->renderer->render_string('global.twig.c',$buf);
@@ -82,14 +71,12 @@ $this->file_write('extgen_php_'.$this->name.'.c',$res);
 
 /* Build and write autoconf-related stuff */
 
-if ($this->file_exists('config.m4')) $this->file_copy('','config.m4');
+if ($this->src_file_exists('config.m4')) $this->file_copy('','config.m4',true);
 else $this->renderer->render_to_file('config.twig.m4','config.m4');
 
-/* Copy tests, if any */
+/* Copy tests, if dir exists */
 
-$test_dir=$this->source_dir.'/tests';
-if (is_dir($test_dir))
-	PHO_File::recursive_copy($test_dir,$this->dest_dir.'/tests');
+$this->file_copy('','tests',true,true);
 }
 
 //============================================================================

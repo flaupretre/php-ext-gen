@@ -117,8 +117,8 @@ typedef struct
 
 #define EG_FUNC_RETVAL_NULL()					{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_NULL(_eg_retval); _eg_retval->isset=1; } }
 #define EG_FUNC_RETVAL_BOOL(val)				{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_BOOL(_eg_retval,val); _eg_retval->isset=1; } }
-#define EG_FUNC_RETVAL_FALSE()  				{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_FALSE(_eg_retval,); _eg_retval->isset=1; } }
-#define EG_FUNC_RETVAL_TRUE()   				{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_TRUE(_eg_retval,); _eg_retval->isset=1; } }
+#define EG_FUNC_RETVAL_FALSE()  				{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_FALSE(_eg_retval); _eg_retval->isset=1; } }
+#define EG_FUNC_RETVAL_TRUE()   				{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_TRUE(_eg_retval); _eg_retval->isset=1; } }
 #define EG_FUNC_RETVAL_INT(val) 				{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_INT(_eg_retval,val); _eg_retval->isset=1; } }
 #define EG_FUNC_RETVAL_FLOAT(val)				{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_FLOAT(_eg_retval,val); _eg_retval->isset=1; } }
 #define EG_FUNC_RETVAL_STRINGL(str, len, dup)	{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_STRINGL(_eg_retval,str, len, dup); _eg_retval->isset=1; } }
@@ -156,7 +156,7 @@ typedef struct
 #define _EG_FUNC_ARG_RESET_TO_WRITE(argp)	{ _EG_FUNC_TYPE_RESET(argp); argp->_written=1; }
 
 #define EG_FUNC_ARG_NULL(argp)				   	{ if (argp->_writable) { _EG_FUNC_ARG_RESET_TO_WRITE(argp); } }
-#define EG_FUNC_ARG_BOOL(argp,val)			   	{ if (argp->_writable) { _EG_FUNC_ARG_RESET_TO_WRITE(argp); _EG_FUNC_TYPE_BOOL(argp,val); argp->_written=1;} }
+#define EG_FUNC_ARG_BOOL(argp,val)			   	{ if (argp->_writable) { _EG_FUNC_ARG_RESET_TO_WRITE(argp); _EG_FUNC_TYPE_BOOL(argp,val); } }
 #define EG_FUNC_ARG_FALSE(argp)  			    { if (argp->_writable) { _EG_FUNC_ARG_RESET_TO_WRITE(argp); _EG_FUNC_TYPE_FALSE(argp); } }
 #define EG_FUNC_ARG_TRUE(argp)   			   	{ if (argp->_writable) { _EG_FUNC_ARG_RESET_TO_WRITE(argp); _EG_FUNC_TYPE_TRUE(argp); } }
 #define EG_FUNC_ARG_INT(argp,val) 			    { if (argp->_writable) { _EG_FUNC_ARG_RESET_TO_WRITE(argp); _EG_FUNC_TYPE_INT(argp,val); } }

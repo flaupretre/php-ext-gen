@@ -20,11 +20,11 @@ if ({{ loop.index }} > ZEND_NUM_ARGS())
 	{
 	/*--- Arg was not set */
 	ip->is_unset=EG_TRUE;
-	ip->_writable=EG_FALSE;
 
 	/* Set default value if one was given */
 
 	{% if arg.default is not null %}
+		ip->_writable=EG_FALSE;
 		{% if (arg.scalar_type=='string') %}
 			{ /* Use tmp string because formula must run once only */
 			eg_str_val tmp_string={{ arg.default }};
@@ -35,6 +35,8 @@ if ({{ loop.index }} > ZEND_NUM_ARGS())
 			_EG_FUNC_TYPE_{{ arg.scalar_type|upper }}(ip,({{ arg.default }}));
 			}
 		{% endif %}
+	{% else %} /* As we have no default, arg can be written by user code */
+		ip->_writable=EG_TRUE;
 	{% endif %} {# Arg defines default #}
 	}
 else

@@ -20,12 +20,11 @@ public $gen;
 // Properties need to be declared to be accessible from twig using '.'
 
 public $header;
-public $trailer;
-public $config_m4;
+public $user;
 
 private static $data_files=array(
-	 'header.twig.c' => 'header'
-	,'trailer.twig.c' => 'trailer'
+	 'user.h' => 'user_header'
+	,'user.c' => 'user_code'
 	);
 
 //---------

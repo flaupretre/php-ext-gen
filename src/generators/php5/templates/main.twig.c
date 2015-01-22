@@ -15,6 +15,11 @@ zend_module_entry {{ name }}_module_entry;
 #define phpext_{{ name }}_ptr &{{ name }}_module_entry
 
 /*---------------------------------------------------------------*/
+/*--- Header code */
+
+{{ global_data.user_header }}
+
+/*---------------------------------------------------------------*/
 /*--- Module global data */
 
 ZEND_BEGIN_MODULE_GLOBALS({{ name }})
@@ -82,17 +87,22 @@ static void {{ name }}_globals_dtor(zend_{{ name }}_globals * globals TSRMLS_DC)
 #include "extgen.lib.c"
 
 /*---------------------------------------------------------------*/
-/*--- Header code */
-
-{{ global_data.header }}
-
-/*---------------------------------------------------------------*/
 /* Ini settings */
 
-{% block ini_settings %}
-{% include 'main.ini_settings.twig.c' %}
-{% block user_ini_settings %}{% endblock %}
-{% endblock %}
+PHP_INI_BEGIN()
+
+{% for ini in ini_settings %}
+	{{ ini.std_macro }}("{{ name }}.{{ ini.name }}", "{{ ini.default }}",
+		{{ ini.access }}, {{ ini.modify }}, {{ ini.name }}, zend_{{ name }}_globals,
+		{{ name }}_globals)
+{% endfor %}
+
+PHP_INI_END()
+
+/*---------------------------------------------------------------*/
+/*--- Header code */
+
+{{ global_data.user_code }}
 
 /*---------------------------------------------------------------*/
 /* Extension functions */
@@ -100,10 +110,6 @@ static void {{ name }}_globals_dtor(zend_{{ name }}_globals * globals TSRMLS_DC)
 {% for fname,function in functions %}
 #include "{{ function.dest_filename }}"
 {% endfor %}
-
-/* Trailer code */
-
-{{ global_data.trailer }}
 
 /*---------------------------------------------------------------*/
 /* PHP_Mxxx functions */
@@ -189,6 +195,7 @@ return SUCCESS;
 static PHP_MSHUTDOWN_FUNCTION({{ name }})
 {
 {% block user_mshutdown_pre %}{% endblock %}
+{% block user_mshutdown %}{% endblock %}
 
 /* Unregister ini entries */
 

@@ -147,7 +147,7 @@ try
 
 public function file_contents($rpath)
 {
-$path=$this->source_dir.'/'.$rpath;
+$path=$this->src_path($rpath);
 
 if (!file_exists($path)) throw new Exception("$path: File not found");
 
@@ -167,7 +167,7 @@ return $class;
 
 //-----
 
-protected function read_source_data()
+public function read_source_data()
 {
 PHO_Display::info('Reading source files...');
 
@@ -299,21 +299,44 @@ return $value;
 }
 
 //-----
+
+public function src_path($fname)
+{
+return $this->source_dir.'/'.$fname;
+}
+
+//-----
+
+public function src_file_exists($rpath)
+{
+return file_exists($this->src_path($rpath));
+}
+
+//-----
+
+public function dst_path($fname)
+{
+return $this->dest_dir.'/'.$fname;
+}
+
+//-----
 // Write a file to dest dir
 
 public function file_write($fname,$buf)
 {
 $this->renderer->reset_line_info($buf,$fname);
-file_put_contents($this->dest_dir.'/'.$fname,$buf);
+file_put_contents($this->dst_path($fname),$buf);
 }
 
 //---------
 // Recursive copy with expansion if set
 
-public function file_copy($rdir,$fname)
+public function file_copy($rdir,$fname,$expand,$optional=false)
 {
-$src=$this->source_dir.'/'.$rdir.$fname;
-$dst=$this->dest_dir.'/'.$rdir.$fname;
+if ((!$this->src_file_exists($rdir.$fname)) && optional) return;
+
+$src=$this->src_path($rdir.$fname);
+$dst=$this->dst_path($rdir.$fname);
 
 if (is_dir($src))
 	{
@@ -321,15 +344,14 @@ if (is_dir($src))
     while(($entry=readdir($dir))!==false)
 		{
 		if (($entry==='.')||($entry==='..')) continue;
-		$this->recursive_copy($rdir.$fname.'/',$entry);
+		$this->file_copy($rdir.$fname.'/',$entry,$expand);
 		}
 	closedir($dir);
 	}
 else
 	{
 	$contents=$this->file_contents($rdir.$fname);
-	if ($this->expand)
-		$contents=$this->gen->renderer->render_string($rdir.$fname,$contents);
+	if ($expand) $contents=$this->renderer->render_string($rdir.$fname,$contents);
 	$ddir=dirname($dst);
 	if (!is_dir($ddir)) @mkdir($ddir,0755,true);
 	$this->file_write($rdir.$fname,$contents);

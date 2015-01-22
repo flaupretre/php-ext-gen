@@ -10,7 +10,7 @@ _EG_FUNC_RETVAL *_eg_retval
 , int _eg_num_set_args
 {% for arg in func.arguments %}
 	, {{ (arg.type=="zval") ? "zval" : "_EG_FUNC_ARGUMENT" }} *{{ arg.name }}
-{% endfor %} )
+{% endfor %} TSRMLS_DC)
 {	/*---- Function body */
 
 { /* Enclose in braces because of argument declarations */
@@ -35,8 +35,6 @@ _EG_FUNC_ARGUMENT *ip;
 
 _EG_FUNC_RETVAL_INIT(&_eg_retval_s);
 
-{% block user_external_post_init %}{% endblock %}
-
 /* Parse arguments */
 
 {# This block allows user code to compute context-dependant default values #}
@@ -59,7 +57,7 @@ _EG_FUNC_RETVAL_INIT(&_eg_retval_s);
 				{% else %}
 					, &({{ arg.name }}_es.i)
 				{% endif %}
-			{% endfor %} );
+			{% endfor %} TSRMLS_CC);
 		}
 
 	{% block user_external_post_call %}{% endblock %}

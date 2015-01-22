@@ -46,7 +46,7 @@ public function prepare()
 
 public function generate()
 {
-$this->gen->file_copy('', $this->name);
+$this->gen->file_copy('', $this->name,$this->expand);
 }
 
 //============================================================================

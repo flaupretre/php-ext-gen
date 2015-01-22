@@ -35,9 +35,9 @@ $this->gen=$gen;
 
 public static function create($gen)
 {
-if (file_exists($gen->source_dir.'/global.yml'))
+if (file_exists($gen->src_path('global.yml')))
 	$syntax='Yaml';
-elseif (file_exists($gen->source_dir.'/global.json'))
+elseif (file_exists($gen->src_path('global.json')))
 	$syntax='Json';
 else
 	throw new Exception("Cannot determine metadata syntax");
