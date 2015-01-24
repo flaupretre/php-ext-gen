@@ -9,7 +9,7 @@ macros:
 
 name: newt
 
-autoconf:	#TODO
+version: 0.52.18
 
 functions:
   - newt_bell

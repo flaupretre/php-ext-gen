@@ -7,6 +7,7 @@
 
 static void extgen_func_{{ func.name }}(
 _EG_FUNC_RETVAL *_eg_retval
+, int return_value_used
 , int _eg_num_set_args
 {% for arg in func.arguments %}
 	, {{ (arg.type=="zval") ? "zval" : "_EG_FUNC_ARGUMENT" }} *{{ arg.name }}
@@ -50,6 +51,7 @@ _EG_FUNC_RETVAL_INIT(&_eg_retval_s);
 		{ /* Enclose in braces because of possible argument declarations */
 		extgen_func_{{ func.name }}(
 			  &_eg_retval_s
+			, return_value_used
 			, (int)ZEND_NUM_ARGS()
 			{% for arg in func.arguments %}
 				{% if (arg.type=="zval") %}

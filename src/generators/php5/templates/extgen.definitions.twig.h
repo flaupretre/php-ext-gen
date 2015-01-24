@@ -11,6 +11,7 @@ typedef double eg_float;
 typedef char *eg_str_val;
 typedef int eg_str_len;
 typedef HashTable *eg_array;
+typedef eg_int eg_resource;
 
 typedef zend_uchar	eg_type;
 
@@ -23,6 +24,7 @@ typedef zend_uchar	eg_type;
 #define EG_IS_FLOAT		(eg_type)IS_DOUBLE
 #define EG_IS_STRING	(eg_type)IS_STRING
 #define EG_IS_ARRAY		(eg_type)IS_ARRAY
+#define EG_IS_RESOURCE	(eg_type)IS_RESOURCE
 
 #define EG_TRUE		(eg_bool)1
 #define EG_FALSE	(eg_bool)0
@@ -38,6 +40,9 @@ typedef zend_uchar	eg_type;
 	eg_str_val sval; \
 	eg_str_len slen; \
 	eg_array aval; \
+	eg_resource rid; \
+	int rtype; \
+	void *rptr; \
 	int _alloc;
 
 /* _EG_FUNC_TYPE_xx */
@@ -53,6 +58,9 @@ typedef zend_uchar	eg_type;
 	(_tp)->sval=NULL; \
 	(_tp)->slen=(eg_str_len)0; \
 	(_tp)->aval=NULL; \
+	(_tp)->rid=(eg_resource)0; \
+	(_tp)->rtype=0; \
+	(_tp)->rptr=NULL; \
 	(_tp)->_alloc=0;
 
 #define eg_array_efree(arr)	(void)zend_hash_destroy(arr)
@@ -105,6 +113,14 @@ typedef zend_uchar	eg_type;
 	_tp->_alloc=dup; \
 	}
 
+#define _EG_FUNC_TYPE_RESOURCE(_tp,id,type,ptr) \
+	{ \
+	_tp->rid=(eg_resource)id; \
+	_tp->rtype=type; \
+	_tp->rptr=ptr; \
+	_EG_FUNC_TYPE_SET_TYPE(_tp,EG_IS_RESOURCE); \
+	}
+
 /* EG_FUNC_RETVAL_xx */
 
 typedef struct
@@ -124,6 +140,7 @@ typedef struct
 #define EG_FUNC_RETVAL_STRINGL(str, len, dup)	{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_STRINGL(_eg_retval,str, len, dup); _eg_retval->isset=1; } }
 #define EG_FUNC_RETVAL_STRING(str, dup)			{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_STRING(_eg_retval,str, dup); _eg_retval->isset=1; } }
 #define EG_FUNC_RETVAL_ARRAY(val,dup)			{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_ARRAY(_eg_retval,val,dup); _eg_retval->isset=1; } }
+#define EG_FUNC_RETVAL_RESOURCE(id) 			{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_RESOURCE(_eg_retval,id,0,NULL); _eg_retval->isset=1; } }
 
 /* EG_FUNC_RETURN_xx */
 
@@ -136,6 +153,7 @@ typedef struct
 #define EG_FUNC_RETURN_STRINGL(str,len,dup)	{ EG_FUNC_RETVAL_STRINGL(str,len,dup); return; }
 #define EG_FUNC_RETURN_STRING(str,dup)		{ EG_FUNC_RETVAL_STRING(str,dup); return; }
 #define EG_FUNC_RETURN_ARRAY(val,dup)		{ EG_FUNC_RETVAL_ARRAY(val,dup); return; }
+#define EG_FUNC_RETURN_RESOURCE(id)			{ EG_FUNC_RETVAL_RESOURCE(id); return; }
 
 /* EG_FUNC_ARG_xx */
 
@@ -164,6 +182,7 @@ typedef struct
 #define EG_FUNC_ARG_STRINGL(argp,str, len, dup) { if (argp->_writable) { _EG_FUNC_ARG_RESET_TO_WRITE(argp); _EG_FUNC_TYPE_STRINGL(argp,str, len, dup); } }
 #define EG_FUNC_ARG_STRING(argp,str, dup)	    { if (argp->_writable) { _EG_FUNC_ARG_RESET_TO_WRITE(argp); _EG_FUNC_TYPE_STRING(argp,str, dup); } }
 #define EG_FUNC_ARG_ARRAY(argp,val,dup)			{ if (argp->_writable) { _EG_FUNC_ARG_RESET_TO_WRITE(argp); _EG_FUNC_TYPE_ARRAY(argp,val,dup); } }
+#define EG_FUNC_ARG_RESOURCE(argp,idl) 		    { if (argp->_writable) { _EG_FUNC_ARG_RESET_TO_WRITE(argp); _EG_FUNC_TYPE_RESOURCE(argp,id,0,NULL); } }
 
 #define _EG_FUNC_TYPE_TO_ZVAL(zpp,ip) { \
 	SEPARATE_ZVAL_IF_NOT_REF(zpp); \
@@ -186,6 +205,9 @@ typedef struct
 			break; \
 		case EG_IS_ARRAY: \
 			EG_ZVAL_ARRAY(*(zpp), (ip)->aval); \
+			break; \
+		case EG_IS_RESOURCE: \
+			EG_ZVAL_RESOURCE(*(zpp), (ip)->rid); \
 			break; \
 		} }
 
@@ -414,11 +436,14 @@ typedef struct {
 #define EG_Z_ARRVAL(z)          Z_ARRVAL(z)
 #define EG_Z_ARRVAL_P(zp)       Z_ARRVAL_P(zp)
 #define EG_Z_ARRVAL_PP(zpp)     Z_ARRVAL_PP(zpp)
+#define EG_Z_RESVAL(z)          Z_RESVAL(z)
+#define EG_Z_RESVAL_P(zp)       Z_RESVAL_P(zp)
+#define EG_Z_RESVAL_PP(zpp)     Z_RESVAL_PP(zpp)
 
 #ifdef ZVAL_ARRAY
 #	define EG_ZVAL_ARRAY(zp,ht)	ZVAL_ARRAY(zp,ht)
 #else
-#	define EG_ZVAL_ARRAY(zp,ht) { Z_TYPE_P(zp)=EG_IS_ARRAY; Z_ARRVAL_P(zp)=ht; }
+#	define EG_ZVAL_ARRAY(zp,ht) { EG_Z_TYPE_P(zp)=EG_IS_ARRAY; EG_Z_ARRVAL_P(zp)=ht; }
 #endif
 
 #define EG_ZVAL_NULL(zp)		ZVAL_NULL(zp)
@@ -430,6 +455,7 @@ typedef struct {
 #define EG_ZVAL_STRING(zp,val,duplicate)		ZVAL_STRING(zp,val,duplicate)
 #define EG_ZVAL_STRINGL(zp,val,len,duplicate)	ZVAL_STRINGL(zp,val,len,duplicate)
 #define EG_ZVAL_EMPTY_STRING(zp)				ZVAL_EMPTY(zp)
+#define EG_ZVAL_RESOURCE(zp,id)		ZVAL_RESOURCE(zp,id)
 
 #define EG_ZVAL_FALSE(zp)	ZVAL_FALSE(zp)
 #define EG_ZVAL_TRUE(zp)	ZVAL_TRUE(zp)
@@ -442,12 +468,17 @@ typedef struct {
 #define EG_ZVAL_IS_FLOAT(zp)	_EG_ZVAL_IS_TYPE(zp,EG_IS_FLOAT)
 #define EG_ZVAL_IS_STRING(zp)	_EG_ZVAL_IS_TYPE(zp,EG_IS_STRING)
 #define EG_ZVAL_IS_ARRAY(zp)	_EG_ZVAL_IS_TYPE(zp,EG_IS_ARRAY)
+#define EG_ZVAL_IS_RESOURCE(zp)	_EG_ZVAL_IS_TYPE(zp,EG_IS_RESOURCE)
 
-#define EG_ZVAL_ENSURE_BOOL(_zpp) { if (EG_Z_TYPE_P((*_zpp))!=EG_IS_BOOL) convert_to_boolean_ex((_zpp)); }
-#define EG_ZVAL_ENSURE_INT(_zpp) { if (EG_Z_TYPE_P((*_zpp))!=EG_IS_INT) convert_to_long_ex((_zpp)); }
-#define EG_ZVAL_ENSURE_FLOAT(_zpp) { if (EG_Z_TYPE_P((*_zpp))!=EG_IS_FLOAT) convert_to_double_ex((_zpp)); }
-#define EG_ZVAL_ENSURE_STRING(_zpp) { if (EG_Z_TYPE_P((*_zpp))!=EG_IS_STRING) convert_to_string_ex((_zpp)); }
-#define EG_ZVAL_ENSURE_ARRAY(_zpp) { if (EG_Z_TYPE_P((*_zpp))!=EG_IS_ARRAY) convert_to_array_ex((_zpp)); }
+#define EG_ZVAL_ENSURE_BOOL(_zpp) { if (EG_Z_TYPE_PP(_zpp)!=EG_IS_BOOL) convert_to_boolean_ex((_zpp)); }
+#define EG_ZVAL_ENSURE_INT(_zpp) { if (EG_Z_TYPE_PP(_zpp)!=EG_IS_INT) convert_to_long_ex((_zpp)); }
+#define EG_ZVAL_ENSURE_FLOAT(_zpp) { if (EG_Z_TYPE_PP(_zpp)!=EG_IS_FLOAT) convert_to_double_ex((_zpp)); }
+#define EG_ZVAL_ENSURE_STRING(_zpp) { if (EG_Z_TYPE_PP(_zpp)!=EG_IS_STRING) convert_to_string_ex((_zpp)); }
+#define EG_ZVAL_ENSURE_ARRAY(_zpp) { if (EG_Z_TYPE_PP(_zpp)!=EG_IS_ARRAY) convert_to_array_ex((_zpp)); }
+
+/* convert_to_resource() does not exist. Use convert_to_long */
+
+#define EG_ZVAL_ENSURE_RESOURCE(_zpp) { if (EG_Z_TYPE_P((*_zpp))!=EG_IS_RESOURCE) { convert_to_long_ex((_zpp)); EG_Z_TYPE_PP(_zpp)=EG_IS_RESOURCE; } }
 
 /*---------------------------------------------------------------*/
 /*--- API numbers for each minor version */
@@ -501,8 +532,35 @@ typedef struct {
 #define _EG_REGISTER_STRINGL_CONSTANT(name,val,len) REGISTER_STRINGL_CONSTANT(name,val,len,CONST_CS|CONST_PERSISTENT)
 
 /*---------------------------------------------------------------*/
-/*--- extgen-specific */
+/*--- Resources */
 
+#define EG_RESOURCE_IS_PERSISTENT(id)	(id < 0)
+
+#define _EG_RESOURCE_HASHTABLE(persistent) \
+	((persistent) ? (&EG(regular_list)) : (&EG(persistent_list)))
+
+/* The variable containing the type */
+
+#define EG_RESOURCE_TYPE(_type) _eg_resource_type_ ## _type
+
+/* The data structure */
+
+#define EG_RESOURCE_STRUCT(_type) _eg_resource_struct_ ## _type
+
+/* The destructor base name */
+
+#define _EG_RESOURCE_DTOR_BASE(_type) _eg_resource_dtor_ ## _type
+
+/*---*/
+
+#define EG_RESOURCE_REGISTER(ptr,type,persistent) \
+	_eg_res_register(ptr,type,persistent TSRMLS_CC)
+	
+#define EG_RESOURCE_DELETE(id) _eg_res_delete(id TSRMLS_CC)
+
+#define EG_RESOURCE_FIND(id, typep) _eg_res_find(id, typep TSRMLS_CC)
+
+#define EG_RESOURCE_ADDREF(id) _eg_res_addref(id TSRMLS_CC)
 
 /*---------------------------------------------------------------*/
 /*--- Miscellaneoous */
@@ -529,6 +587,10 @@ static void *_eg_allocate(void *ptr, size_t size, int persistent);
 static void *_eg_duplicate(void *ptr, size_t size, int persistent);
 static HashTable *_eg_zval_array_duplicate(HashTable *source_ht);
 static int _eg_extension_is_loaded(char *name TSRMLS_DC);
-static void _eg_convert_arg_zpp_to_scalar(eg_type target_type,zval **zpp,_EG_FUNC_ARGUMENT *ip);
+static void _eg_convert_arg_zpp_to_scalar(eg_type target_type,zval **zpp,_EG_FUNC_ARGUMENT *ip TSRMLS_DC);
+static eg_resource _eg_res_register(void *ptr, int type, int persistent TSRMLS_DC);
+static int _eg_res_delete(eg_resource id TSRMLS_DC);
+static void *_eg_res_find(eg_resource id, int *type TSRMLS_DC);
+static int _eg_res_addref(eg_resource id TSRMLS_DC);
 
 /*============================================================================*/

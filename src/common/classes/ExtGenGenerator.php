@@ -45,6 +45,7 @@ public $extra_files; // array of ExtGenExtraFile instances
 public $functions;	// Function table. Array of ExtGenFunctions instances
 public $constants;	// Constant table. Array of ExtGenConstant instances
 public $ini_settings; // Ini settings. Array of ExtGenIniSetting instances
+public $resources; 	// Resource types. Array of ExtGenResource instances
 
 //---------
 
@@ -236,6 +237,13 @@ try {
 	if (!is_array($funcnames))
 		throw new Exception("'functions' element must be an array");
 
+	//--- Get resource names
+
+	$rscnames=ExtGen::optional_element($data,'resources');
+	if (is_null($rscnames)) $rscnames=array();
+	if (!is_array($rscnames))
+		throw new Exception("'resources' element must be an array");
+
 	//--- Constants
 
 	$constants=ExtGen::optional_element($data,'constants');
@@ -259,13 +267,26 @@ try {
 
 $class=$this->getclass('Function');
 $this->functions=array();
-foreach($funcnames as $fname)
+foreach($funcnames as $name)
 	{
-	if (array_key_exists($fname,$this->functions))
-		throw new Exception("Function $fname already defined");
+	if (array_key_exists($name,$this->functions))
+		throw new Exception("Function $name already defined");
 	try	{
-		$this->functions[$fname]=new $class($this,$fname);
-		} catch(Exception $e) { throw new Exception($e->getMessage()." (while defining function $fname)"); }
+		$this->functions[$name]=new $class($this,$name);
+		} catch(Exception $e) { throw new Exception($e->getMessage()." (while defining function $name)"); }
+	}
+
+// Resources
+
+$class=$this->getclass('Resource');
+$this->resources=array();
+foreach($rscnames as $name)
+	{
+	if (array_key_exists($name,$this->resources))
+		throw new Exception("Resource $name already defined");
+	try	{
+		$this->resources[$name]=new $class($this,$name);
+		} catch(Exception $e) { throw new Exception($e->getMessage()." (while defining resource $name)"); }
 	}
 
 // Global data
@@ -333,7 +354,7 @@ file_put_contents($this->dst_path($fname),$buf);
 
 public function file_copy($rdir,$fname,$expand,$optional=false)
 {
-if ((!$this->src_file_exists($rdir.$fname)) && optional) return;
+if ((!$this->src_file_exists($rdir.$fname)) && $optional) return;
 
 $src=$this->src_path($rdir.$fname);
 $dst=$this->dst_path($rdir.$fname);

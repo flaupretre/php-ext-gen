@@ -69,8 +69,11 @@ return status;
 /*---------------------------------------------------------------*/
 
 static void _eg_convert_arg_zpp_to_scalar(eg_type target_type,zval **zpp
-	,_EG_FUNC_ARGUMENT *ip)
+	,_EG_FUNC_ARGUMENT *ip TSRMLS_CC)
 {
+int id,type;
+void *ptr;
+
 switch(target_type)
 	{
 	case EG_IS_BOOL:
@@ -92,5 +95,84 @@ switch(target_type)
 		EG_ZVAL_ENSURE_STRING(zpp);
 		_EG_FUNC_TYPE_STRINGL(ip,EG_Z_STRVAL_PP(zpp),EG_Z_STRLEN_PP(zpp),0);
 		break;
+
+	case EG_IS_RESOURCE:
+		EG_ZVAL_ENSURE_RESOURCE(zpp);
+		ptr=EG_RESOURCE_FIND(id=EG_Z_RESVAL_PP(zpp),&type);
+		_EG_FUNC_TYPE_RESOURCE(ip,id,type,ptr);
+		break;
 	}
+}
+
+/*---------------*/
+
+static eg_resource _eg_res_register(void *ptr, int type, int persistent TSRMLS_DC)
+{
+HashTable *ht;
+int index;
+zend_rsrc_list_entry le;
+
+ht=_EG_RESOURCE_HASHTABLE(persistent);
+
+le.ptr=ptr;
+le.type=type;
+le.refcount=1;
+
+index = zend_hash_next_free_element(ht);
+zend_hash_index_update(ht, index, (void *) &le, sizeof(zend_rsrc_list_entry), NULL);
+
+return (eg_resource)(persistent ? -index : index);
+}
+
+/*---------------*/
+
+static int _eg_res_delete(eg_resource id TSRMLS_DC)
+{
+HashTable *ht;
+zend_rsrc_list_entry *le;
+
+ht=_EG_RESOURCE_HASHTABLE(EG_RESOURCE_IS_PERSISTENT(id));
+
+if (zend_hash_index_find(ht, id, (void **) &le)==SUCCESS) 
+	return ((--le->refcount<=0) ? zend_hash_index_del(ht, id) : SUCCESS);
+
+return FAILURE;
+}
+
+/*---------------*/
+
+static void *_eg_res_find(eg_resource id, int *type TSRMLS_DC)
+{
+HashTable *ht;
+zend_rsrc_list_entry *le;
+
+ht=_EG_RESOURCE_HASHTABLE(EG_RESOURCE_IS_PERSISTENT(id));
+if (zend_hash_index_find(ht, id, (void **) &le)==SUCCESS)
+	{
+	*type = le->type;
+	return le->ptr;
+	}
+else
+	{
+	*type = -1;
+	return NULL;
+	}
+}
+
+/*---------------*/
+
+static int _eg_res_addref(eg_resource id TSRMLS_DC)
+{
+HashTable *ht;
+zend_rsrc_list_entry *le;
+
+ht=_EG_RESOURCE_HASHTABLE(EG_RESOURCE_IS_PERSISTENT(id));
+	
+if (zend_hash_index_find(ht, id, (void **) &le)==SUCCESS)
+	{
+	le->refcount++;
+	return SUCCESS;
+	}
+
+return FAILURE;
 }

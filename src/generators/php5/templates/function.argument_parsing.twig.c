@@ -39,9 +39,8 @@ if ({{ loop.index }} > ZEND_NUM_ARGS())
 		ip->_writable=EG_TRUE;
 	{% endif %} {# Arg defines default #}
 	}
-else
+else /*--- Arg was set */
 	{
-	 /*--- Arg was set */
 	ip->is_unset=EG_FALSE;
 	ip->_writable={{ (arg.byref ? "EG_TRUE" : "EG_FALSE") }};
 {% if arg.nullok %}
