@@ -10,7 +10,7 @@ _EG_FUNC_RETVAL *_eg_retval
 , int return_value_used
 , int _eg_num_set_args
 {% for arg in func.arguments %}
-	, {{ (arg.type=="zval") ? "zval" : "_EG_FUNC_ARGUMENT" }} *{{ arg.name }}
+	, {{ (arg.type=="zval") ? "zval" : "EG_FUNC_ARGUMENT" }} *{{ arg.name }}
 {% endfor %} TSRMLS_DC)
 {	/*---- Function body */
 

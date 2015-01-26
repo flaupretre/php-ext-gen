@@ -1,10 +1,10 @@
 /*============================================================================*/
-/* All these functions are exposed through macros */
+/* The functions starting with '_' are not exposed directly to user */
 
 /*---------------------------------------------------------------*/
 /* memory alloc/realloc/free/duplicate                           */
 
-static void *_eg_allocate(void *ptr, size_t size, int persistent)
+static void *eg_allocate(void *ptr, size_t size, int persistent)
 {
 if (ptr)
 	{
@@ -25,7 +25,7 @@ return ptr;
 	
 /*----------*/
 
-static void *_eg_duplicate(void *ptr, size_t size, int persistent)
+static void *eg_duplicate(void *ptr, size_t size, int persistent)
 {
 char *p;
 
@@ -71,7 +71,8 @@ return status;
 static void _eg_convert_arg_zpp_to_scalar(eg_type target_type,zval **zpp
 	,_EG_FUNC_ARGUMENT *ip TSRMLS_CC)
 {
-int id,type;
+eg_resource id;
+eg_restype type;
 void *ptr;
 
 switch(target_type)
@@ -98,18 +99,17 @@ switch(target_type)
 
 	case EG_IS_RESOURCE:
 		EG_ZVAL_ENSURE_RESOURCE(zpp);
-		ptr=EG_RESOURCE_FIND(id=EG_Z_RESVAL_PP(zpp),&type);
-		_EG_FUNC_TYPE_RESOURCE(ip,id,type,ptr);
+		_EG_FUNC_TYPE_RESOURCE(ip,EG_Z_RESVAL_PP(zpp));
 		break;
 	}
 }
 
 /*---------------*/
 
-static eg_resource _eg_res_register(void *ptr, int type, int persistent TSRMLS_DC)
+static eg_resource _eg_res_register(void *ptr, eg_restype type, int persistent TSRMLS_DC)
 {
 HashTable *ht;
-int index;
+int id
 zend_rsrc_list_entry le;
 
 ht=_EG_RESOURCE_HASHTABLE(persistent);
@@ -118,10 +118,10 @@ le.ptr=ptr;
 le.type=type;
 le.refcount=1;
 
-index = zend_hash_next_free_element(ht);
+id = zend_hash_next_free_element(ht);
 zend_hash_index_update(ht, index, (void *) &le, sizeof(zend_rsrc_list_entry), NULL);
 
-return (eg_resource)(persistent ? -index : index);
+return (eg_resource)(persistent ? -id : id);
 }
 
 /*---------------*/
@@ -132,6 +132,7 @@ HashTable *ht;
 zend_rsrc_list_entry *le;
 
 ht=_EG_RESOURCE_HASHTABLE(EG_RESOURCE_IS_PERSISTENT(id));
+id=EG_ABS(id);
 
 if (zend_hash_index_find(ht, id, (void **) &le)==SUCCESS) 
 	return ((--le->refcount<=0) ? zend_hash_index_del(ht, id) : SUCCESS);
@@ -140,35 +141,49 @@ return FAILURE;
 }
 
 /*---------------*/
+/* Private */
 
-static void *_eg_res_find(eg_resource id, int *type TSRMLS_DC)
+static zend_rsrc_list_entry * _eg_res_find_entry(eg_resource id TSRMLS_DC)
 {
 HashTable *ht;
 zend_rsrc_list_entry *le;
 
 ht=_EG_RESOURCE_HASHTABLE(EG_RESOURCE_IS_PERSISTENT(id));
-if (zend_hash_index_find(ht, id, (void **) &le)==SUCCESS)
+
+if (zend_hash_index_find(ht, EG_ABS(id), (void **) &le)!=SUCCESS) le=NULL;
+
+return le;
+}
+
+/*---------------*/
+
+static void *_eg_res_find(eg_resource id, eg_restype *type TSRMLS_DC)
+{
+zend_rsrc_list_entry *le;
+void *ptr;
+
+le=_eg_res_find_entry(id TSRMLS_CC);
+if (le)
 	{
 	*type = le->type;
-	return le->ptr;
+	ptr=le->ptr;
 	}
 else
 	{
 	*type = -1;
-	return NULL;
+	ptr=NULL;
 	}
+return ptr;
 }
 
 /*---------------*/
 
 static int _eg_res_addref(eg_resource id TSRMLS_DC)
 {
-HashTable *ht;
 zend_rsrc_list_entry *le;
 
-ht=_EG_RESOURCE_HASHTABLE(EG_RESOURCE_IS_PERSISTENT(id));
-	
-if (zend_hash_index_find(ht, id, (void **) &le)==SUCCESS)
+le=_eg_res_find_entry(id TSRMLS_CC);
+if (le)
 	{
 	le->refcount++;
 	return SUCCESS;

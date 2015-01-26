@@ -1,5 +1,7 @@
 
-static int EG_RESOURCE_TYPE({{ resource.name }})=0;
+/*--- Defining resource {{ resource.name }} */
+
+static eg_restype EG_RESOURCE_TYPE({{ resource.name }})=0;
 
 /* Data structure */
 

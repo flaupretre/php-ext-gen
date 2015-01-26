@@ -185,7 +185,7 @@ REGISTER_INI_ENTRIES();
 /* Declare resource types */
 
 {% for resource in resources %}
-	EG_RESOURCE_TYPE({{ resource.name }})=zend_register_list_destructors_ex(
+	EG_RESOURCE_TYPE({{ resource.name }})=(eg_restype)zend_register_list_destructors_ex(
 		_EG_RESOURCE_DTOR({{ resource.name }})_ext_d,
 		_EG_RESOURCE_DTOR({{ resource.name }})_ext_p,
 		"{{ resource.display_string }}",

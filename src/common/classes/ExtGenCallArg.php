@@ -28,6 +28,8 @@ class ExtGenCallArg
 
 //----- Properties
 
+//TODO: resources
+
 private static $scalar_types=array('bool','int','float','string');
 
 public $name;

@@ -1,7 +1,7 @@
 
 /* Compute return value */
 
-_EG_FUNC_TYPE_TO_ZVAL(&return_value,&_eg_retval_s);
+_EG_FUNC_TYPE_TO_ZVAL(return_value_ptr,&_eg_retval_s);
 
 /* Compute passed-by-ref returned values */
 

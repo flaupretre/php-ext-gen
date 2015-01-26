@@ -60,6 +60,10 @@ else /*--- Arg was set */
 		{% else %} {# Array not accepted -> scalar only #}
 			_eg_convert_arg_zpp_to_scalar(EG_IS_{{ arg.scalar_type|upper }},zpp,ip);
 		{% endif %} {# accept_array #}
+		{% if arg.scalar_type == 'resource' %}
+			/* TODO: check resource_type against arg.resource_type if not null
+			* and fill rtype and rptr elements if type is OK */
+		{% endif %} {# scalar_type == resource %}
 {% if arg.nullok %}
 		}
 	else
