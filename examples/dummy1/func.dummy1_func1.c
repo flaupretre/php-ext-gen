@@ -23,44 +23,44 @@ arguments:
 {% block user_body %}
 /* Unnecessarily complicated function body */
 
-eg_str_val p;
+eg_string p;
 eg_float f;
 
 /* Print arg1 type and value */
 /* arg1 can be array, bool, or null */
 
-if (arg1->type==EG_IS_ARRAY) {	/* Check if array */
+if (EG_TYPE(arg1)==EG_IS_ARRAY) {	/* Check if array */
 	php_printf("arg1 is an array\n");
 } else {	/* Not array, we know it's a bool */
-	php_printf("arg1 is bool, value=%d\n",arg1->bval);
+	php_printf("arg1 is bool, value=%d\n",EG_BVAL(arg1));
 }
 
 /* Print arg2, and modify value (pass by ref) */
 
-php_printf("Received arg2 is %f\n",arg2->fval);
-f=3.14 * arg2->fval;
+php_printf("Received arg2 is %f\n",EG_FVAL(arg2));
+f=3.14 * EG_FVAL(arg2);
 p="replaced arg2";
-EG_FUNC_ARG_STRING(arg2,p,1);
+EG_ARG_SET_STRING(arg2,p,1);
 
-/* Print arg3, reallocate for a bigger string and display again */
+/* Print arg3, reallocate and replace with a larger string */
 
 p="I need space, more SPACE !!!";
 
-php_printf("Received arg3 is <%s> (length=%d)\n",arg3->sval,arg3->slen);
-EG_FUNC_ARG_STRING(arg3, p, 1);
+php_printf("Received arg3 is <%s> (length=%d)\n",EG_STRVAL(arg3),EG_STRLEN(arg3));
+EG_ARG_SET_STRING(arg3, p, 1);
 
 /* Arg 4 */
 
-if (arg4->is_unset)
+if (EG_ARG_IS_UNSET(arg4))
 	php_printf("arg4 is not set\n");
 else
 	{
-	php_printf("Received arg4 is <%s> (length=%d)\n",arg4->sval,arg4->slen);
-	EG_FUNC_ARG_FLOAT(arg4, f);
+	php_printf("Received arg4 is <%s> (length=%d)\n",EG_STRVAL(arg4),EG_STRLEN(arg4));
+	EG_ARG_SET_FLOAT(arg4, f);
 	}
 
 /* Now, return value */
 
-EG_FUNC_RETURN_STRING("Return",1);
+EG_RETURN_STRING("Return",1);
 
 {% endblock user_body %}

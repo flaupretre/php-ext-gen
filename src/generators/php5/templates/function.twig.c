@@ -6,11 +6,11 @@
 /* Internal function */
 
 static void extgen_func_{{ func.name }}(
-_EG_FUNC_RETVAL *_eg_retval
+_EG_RETVAL *_eg_retval
 , int return_value_used
 , int _eg_num_set_args
 {% for arg in func.arguments %}
-	, {{ (arg.type=="zval") ? "zval" : "EG_FUNC_ARGUMENT" }} *{{ arg.name }}
+	, {{ (arg.type=="zval") ? "zval" : "EG_ARGUMENT" }} *{{ arg.name }}
 {% endfor %} TSRMLS_DC)
 {	/*---- Function body */
 
@@ -24,17 +24,17 @@ _EG_FUNC_RETVAL *_eg_retval
 
 PHP_FUNCTION({{ func.name }})
 {
-_EG_FUNC_RETVAL _eg_retval_s; /* Return value */
+_EG_RETVAL _eg_retval_s; /* Return value */
 {% for arg in func.arguments %}
-_EG_FUNC_EXTERNAL_ARGUMENT {{ arg.name }}_es;
+_EG_EXTERNAL_ARGUMENT {{ arg.name }}_es;
 {% endfor %}
 zval **zpp;
-_EG_FUNC_ARGUMENT *ip;
+EG_ARGUMENT *ip;
 {% block user_external_func_declarations %}{% endblock %}
 
 /* Init extgen local variables */
 
-_EG_FUNC_RETVAL_INIT(&_eg_retval_s);
+_EG_RETVAL_INIT(&_eg_retval_s);
 
 /* Parse arguments */
 

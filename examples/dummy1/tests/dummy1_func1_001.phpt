@@ -11,13 +11,16 @@ $arg4='dummy';
 
 echo "\n==== Run 1:\n";
 
-dummy1_func1($arg1,$arg2,$arg3);
+$result=dummy1_func1($arg1,$arg2,$arg3);
 
 echo "arg2 :\n";
 var_dump($arg2);
 
 echo "arg3 :\n";
 var_dump($arg3);
+
+echo "Result:";
+var_dump($result);
 
 echo "\n==== Run 2:\n";
 
@@ -53,6 +56,7 @@ arg2 :
 string(13) "replaced arg2"
 arg3 :
 string(28) "I need space, more SPACE !!!"
+Result:string(6) "Return"
 
 ==== Run 2:
 arg1 is an array

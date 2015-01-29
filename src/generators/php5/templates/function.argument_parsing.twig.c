@@ -14,7 +14,7 @@
 zpp=&({{ arg.name }}_es.zp);
 ip=&({{ arg.name }}_es.i);
 
-_EG_FUNC_TYPE_INIT(ip);
+_EG_VARS_INIT(ip);
 ip->_written=0;
 if ({{ loop.index }} > ZEND_NUM_ARGS())
 	{
@@ -27,12 +27,12 @@ if ({{ loop.index }} > ZEND_NUM_ARGS())
 		ip->_writable=EG_FALSE;
 		{% if (arg.scalar_type=='string') %}
 			{ /* Use tmp string because formula must run once only */
-			eg_str_val tmp_string={{ arg.default }};
-			_EG_FUNC_TYPE_STRING(ip,tmp_string,1);
+			eg_string tmp_string={{ arg.default }};
+			_EG_VARS_STRING(ip,tmp_string,1);
 			}
 		{% else %}
 			{
-			_EG_FUNC_TYPE_{{ arg.scalar_type|upper }}(ip,({{ arg.default }}));
+			_EG_VARS_{{ arg.scalar_type|upper }}(ip,({{ arg.default }}));
 			}
 		{% endif %}
 	{% else %} /* As we have no default, arg can be written by user code */
@@ -51,7 +51,7 @@ else /*--- Arg was set */
 			if ((EG_Z_TYPE_PP(zpp)==EG_IS_ARRAY)||{{ (arg.type=='array' ? 1 : 0) }})
 				{ /* Write array */
 				EG_ZVAL_ENSURE_ARRAY(zpp);
-				_EG_FUNC_TYPE_ARRAY(ip,EG_Z_ARRVAL_PP(zpp),0);
+				_EG_VARS_ARRAY(ip,EG_Z_ARRVAL_PP(zpp),0);
 				}
 			else
 				{ /* mixed receiving scalar */
@@ -60,15 +60,14 @@ else /*--- Arg was set */
 		{% else %} {# Array not accepted -> scalar only #}
 			_eg_convert_arg_zpp_to_scalar(EG_IS_{{ arg.scalar_type|upper }},zpp,ip);
 		{% endif %} {# accept_array #}
-		{% if arg.scalar_type == 'resource' %}
-			/* TODO: check resource_type against arg.resource_type if not null
-			* and fill rtype and rptr elements if type is OK */
-		{% endif %} {# scalar_type == resource %}
+		{% if (arg.scalar_type == 'resource') %}
+			/* TODO: check resource_type against arg.resource_type if not null */
+		{% endif %} {# scalar_type == resource #}
 {% if arg.nullok %}
 		}
 	else
 		{
-		_EG_FUNC_TYPE_SET_TYPE(ip,EG_IS_{{ arg.nulltype|upper }});
+		_EG_VARS_SET_TYPE(ip,EG_IS_{{ arg.nulltype|upper }});
 		}
 {% endif %}
 	}

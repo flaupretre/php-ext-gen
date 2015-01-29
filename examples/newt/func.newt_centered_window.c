@@ -15,6 +15,6 @@ arguments:
     optional: true 
 
 {% block user_body %}
-EG_FUNC_RETURN_INT(newtCenteredWindow((long)(width->ival),(long)(height->ival)
-	,title->sval));
+EG_RETURN_INT(newtCenteredWindow((long)(EG_IVAL(width)),(long)(EG_IVAL(height))
+	,EG_STRVAL(title)));
 {% endblock %}
