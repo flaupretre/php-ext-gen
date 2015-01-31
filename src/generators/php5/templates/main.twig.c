@@ -11,7 +11,7 @@
 #define PHP_{{ uname }}_VERSION "{{ version }}"
 #define PHP_{{ uname }}_EXTNAME "{{ name }}"
 
-zend_module_entry {{ name }}_module_entry;
+extern zend_module_entry {{ name }}_module_entry;
 #define phpext_{{ name }}_ptr &{{ name }}_module_entry
 
 /*---------------------------------------------------------------*/
@@ -39,7 +39,7 @@ struct timeval _eg_base_tp;
 
 ZEND_END_MODULE_GLOBALS({{ name }})
 
-/*---*/
+/*---------------------------------------------------------------*/
 
 #ifdef ZTS
 #	define {{ uname }}_G(v) TSRMG({{ name }}_globals_id, zend_{{ name }}_globals *, v)

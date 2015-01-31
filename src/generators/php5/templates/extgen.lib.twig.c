@@ -104,7 +104,7 @@ switch(target_type)
 		ptr=NULL;
 		if (Z_TYPE_PP(zpp)==IS_RESOURCE) {
 			res=EG_Z_RESVAL_PP(zpp);
-			ptr=EG_RESOURCE_FIND(res,&rtype);
+			ptr=zend_list_find(res,&rtype);
 			if (!ptr) res=0; /* Invalid resource */
 			}
 		_EG_VARS_RESOURCE(ip,res);

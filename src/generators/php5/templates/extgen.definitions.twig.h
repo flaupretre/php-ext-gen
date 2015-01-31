@@ -13,6 +13,7 @@ typedef int eg_size;
 typedef HashTable * eg_array;
 typedef int eg_resource;	/* Resource ID */
 typedef int eg_restype;
+typedef int eg_reshandle;
 
 typedef zend_uchar	eg_type;
 
@@ -64,7 +65,8 @@ typedef zend_uchar	eg_type;
 #define EG_STRVAL(_tp)		(_tp)->p.sval
 #define EG_STRLEN(_tp)		(_tp)->n.slen
 #define EG_ARRVAL(_tp)		(_tp)->p.aval
-#define EG_RESOURCE(_tp)	(_tp)->n.rid
+#define EG_RESOURCE(_tp)	EG_RES_HANDLE(_tp)
+#define EG_RES_HANDLE(_tp)	(_tp)->n.rid
 #define EG_RES_TYPE(_tp)	(_tp)->rtype
 #define EG_RES_PTR(_tp)		(_tp)->p.ptr
 
@@ -110,10 +112,10 @@ typedef zend_uchar	eg_type;
 
 #define _EG_VARS_NULL(_tp)
 
-#define   _EG_VARS_BOOL(_tp,val) { _EG_VARS_SET_TYPE(_tp,EG_IS_BOOL); EG_BVAL(_tp)=(eg_bool)(val); }
+#define _EG_VARS_BOOL(_tp,val) { _EG_VARS_SET_TYPE(_tp,EG_IS_BOOL); EG_BVAL(_tp)=(eg_bool)(val); }
 
 #define _EG_VARS_FALSE(_tp) _EG_VARS_BOOL(_tp,EG_FALSE)
-#define  _EG_VARS_TRUE(_tp) _EG_VARS_BOOL(_tp,EG_TRUE)
+#define _EG_VARS_TRUE(_tp) _EG_VARS_BOOL(_tp,EG_TRUE)
 
 #define    _EG_VARS_INT(_tp,val) { _EG_VARS_SET_TYPE(_tp,EG_IS_INT); EG_IVAL(_tp)=(eg_int)(val); }
 #define _EG_VARS_FLOAT(_tp,val) { _EG_VARS_SET_TYPE(_tp,EG_IS_FLOAT); EG_FVAL(_tp)=(eg_float)(val); }
@@ -594,20 +596,26 @@ typedef struct {
 	((EG_RESOURCE_STRUCT(_type) *)_eg_resource_alloc(sizeof(EG_RESOURCE_STRUCT(_type)) \
 		,EG_RESOURCE_TYPE(_type),_persistent))
 
+/* Returns eg_resource */
+
 #define EG_RESOURCE_REGISTER(_ptr) \
 	zend_list_insert(_ptr,((_eg_resource_common_data *)_ptr)->_eg_type TSRMLS_CC)
 
-#define EG_RESOURCE_DELETE(_res) ((_res) ? zend_list_delete(_res) : FAILURE )
+/* Returns SUCCESS/FAILURE - Accepts eg_resource */
 
-#define EG_RESOURCE_FIND(_res,_typep) zend_list_find(_res,_typep)
+#define EG_RESOURCE_DELETE(_res) ((_res) ? zend_list_delete(_res) : FAILURE )
 
 /* Operations on persistent resources */
 
-#define EG_RESOURCE_PERSISTENT_REGISTER(_ptr,_type,_key,_keylen) \
-	_eg_resource_persistent_register(_ptr,_type,_key,_keylen TSRMLS_CC)
+/* Register - Block must have been allocated using EG_RESOURCE_ALLOC() */
+
+#define EG_RESOURCE_PERSISTENT_REGISTER(_ptr,_key,_keylen) \
+	_eg_resource_persistent_register(_ptr,_key,_keylen TSRMLS_CC)
+
+/* Get - Returns a pointer to struct or NULL */
 
 #define EG_RESOURCE_PERSISTENT_FIND(_type,_key,_keylen) \
-	_eg_resource_persistent_find(_type,_key,_keylen TSRMLS_CC)
+	((EG_RESOURCE_STRUCT(_type) *)_eg_resource_persistent_find(EG_RESOURCE_TYPE(_type),_key,_keylen TSRMLS_CC))
 
 /*TODO
 #define eg_resource_ADDREF(id) _eg_res_addref(id TSRMLS_CC)
