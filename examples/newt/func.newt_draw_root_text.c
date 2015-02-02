@@ -9,5 +9,5 @@ arguments:
     type: string
 
 {% block user_body %}
-newtDrawRootText((long)(left->ival),(long)(top->ival), text->sval);
+newtDrawRootText((long)EG_IVAL(left),(long)EG_IVAL(top),EG_STRVAL(text));
 {% endblock %}

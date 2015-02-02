@@ -11,7 +11,7 @@
 #define PHP_{{ uname }}_VERSION "{{ version }}"
 #define PHP_{{ uname }}_EXTNAME "{{ name }}"
 
-zend_module_entry {{ name }}_module_entry;
+extern zend_module_entry {{ name }}_module_entry;
 #define phpext_{{ name }}_ptr &{{ name }}_module_entry
 
 /*---------------------------------------------------------------*/
@@ -39,7 +39,7 @@ struct timeval _eg_base_tp;
 
 ZEND_END_MODULE_GLOBALS({{ name }})
 
-/*---*/
+/*---------------------------------------------------------------*/
 
 #ifdef ZTS
 #	define {{ uname }}_G(v) TSRMG({{ name }}_globals_id, zend_{{ name }}_globals *, v)
@@ -100,6 +100,13 @@ PHP_INI_BEGIN()
 PHP_INI_END()
 
 /*---------------------------------------------------------------*/
+/* Resource code (struct + destructor) */
+
+{% for resource in resources %}
+#include "{{ resource.dest_filename }}"
+{% endfor %}
+
+/*---------------------------------------------------------------*/
 /*--- Header code */
 
 {{ global_data.user_code }}
@@ -156,21 +163,15 @@ static PHP_MINIT_FUNCTION({{ name }})
 
 _eg_build_{{ name }}_constant_values();
 
-{% block user_minit_pre_init_globals %}{% endblock %}
-
 /* Init module globals */
 
 ZEND_INIT_MODULE_GLOBALS({{ name }}, {{ name }}_globals_ctor, NULL);
-
-{% block user_minit_post_init_globals %}{% endblock %}
 
 /* Register ini entries */
 
 REGISTER_INI_ENTRIES();
 
 /* Declare constants */
-
-{% block user_minit_pre_constant_declare %}{% endblock %}
 
 {% for cname,const in constants %}
 	{% if (const.type=='null') %}
@@ -180,7 +181,16 @@ REGISTER_INI_ENTRIES();
 	{% endif %}
 {% endfor %}
 
-{% block user_minit_post_constant_declare %}{% endblock %}
+/*--------*/
+/* Declare resource types */
+
+{% for resource in resources %}
+	EG_RESOURCE_TYPE({{ resource.name }})=(eg_restype)zend_register_list_destructors_ex(
+		_eg_resource_dtor_{{ resource.name }}_ext_np,
+		_eg_resource_dtor_{{ resource.name }}_ext_p,
+		"{{ resource.display_string }}",
+		module_number);
+{% endfor %}
 
 /*--------*/
 

@@ -8,9 +8,12 @@
 typedef zend_bool eg_bool;
 typedef long eg_int;
 typedef double eg_float;
-typedef char *eg_str_val;
-typedef int eg_str_len;
-typedef HashTable *eg_array;
+typedef char * eg_string;
+typedef int eg_size;
+typedef HashTable * eg_array;
+typedef int eg_resource;	/* Resource ID */
+typedef int eg_restype;
+typedef int eg_reshandle;
 
 typedef zend_uchar	eg_type;
 
@@ -23,6 +26,9 @@ typedef zend_uchar	eg_type;
 #define EG_IS_FLOAT		(eg_type)IS_DOUBLE
 #define EG_IS_STRING	(eg_type)IS_STRING
 #define EG_IS_ARRAY		(eg_type)IS_ARRAY
+#define EG_IS_RESOURCE	(eg_type)IS_RESOURCE
+
+#define EG_IS_ZVAL		(eg_type)100
 
 #define EG_TRUE		(eg_bool)1
 #define EG_FALSE	(eg_bool)0
@@ -30,179 +36,233 @@ typedef zend_uchar	eg_type;
 /*---------------------------------------------------------------*/
 /*--- Multi-type pseudo-structure - applies to arguments and retval */
 
-#define _EG_FUNC_TYPE_VARS \
-	eg_type type; \
-	eg_bool	bval; \
-	eg_int ival; \
-	eg_float fval; \
-	eg_str_val sval; \
-	eg_str_len slen; \
-	eg_array aval; \
-	int _alloc;
+/* zp is used for returning values only */
 
-/* _EG_FUNC_TYPE_xx */
-/* _tp is a pointer to the structure containing the _EG_FUNC_TYPE_VARS */
+#define _EG_VARS \
+	eg_type		type; \
+	union { \
+		eg_bool		bval; \
+		eg_int		ival; \
+		eg_float	fval; \
+		eg_size		slen; \
+		eg_resource	rid; \
+		} n; \
+	union { \
+		void *		ptr; \
+		eg_string	sval; \
+		eg_array 	aval; \
+		zval *		zp; \
+		} p; \
+	eg_restype	rtype; \
+	int			_is_alloc;
 
-#define _EG_FUNC_TYPE_SET_TYPE(_tp,_type) { (_tp)->type=_type; }
+#define EG_TYPE(_tp)		((_tp)->type)
 
-#define _EG_FUNC_TYPE_INIT(_tp) \
-	_EG_FUNC_TYPE_SET_TYPE(_tp,EG_IS_NULL); \
-	(_tp)->bval=FALSE; \
-	(_tp)->ival=(eg_int)0; \
-	(_tp)->fval=(eg_float)0; \
-	(_tp)->sval=NULL; \
-	(_tp)->slen=(eg_str_len)0; \
-	(_tp)->aval=NULL; \
-	(_tp)->_alloc=0;
+#define _EG_ZVAL(_tp)		((_tp)->p.zp)
+#define EG_BVAL(_tp)		((_tp)->n.bval)
+#define EG_IVAL(_tp)		((_tp)->n.ival)
+#define EG_FVAL(_tp)		((_tp)->n.fval)
+#define EG_STRVAL(_tp)		((_tp)->p.sval)
+#define EG_STRLEN(_tp)		((_tp)->n.slen)
+#define EG_ARRVAL(_tp)		((_tp)->p.aval)
+#define EG_RESOURCE(_tp)	(EG_RES_HANDLE(_tp))
+#define EG_RES_HANDLE(_tp)	((_tp)->n.rid)
+#define EG_RES_TYPE(_tp)	((_tp)->rtype)
+#define EG_RES_PTR(_tp)		((_tp)->p.ptr)
+
+#define _EG_IS_ALLOC(_tp)	((_tp)->_is_alloc)
+
+/* _EG_VARS_xx */
+/* _tp is a pointer to the structure containing the _EG_VARS */
+
+#define _EG_VARS_SET_TYPE(_tp,_type) { EG_TYPE(_tp)=_type; }
+
+#define _EG_VARS_INIT(_tp) \
+	_EG_VARS_SET_TYPE(_tp,EG_IS_NULL); \
+	_EG_IS_ALLOC(_tp)=0;
 
 #define eg_array_efree(arr)	(void)zend_hash_destroy(arr)
 #define EG_ARRAY_EFREE(arr) { eg_array_efree(arr); arr=(eg_array)0; }
 
-#define _EG_FUNC_TYPE_RESET(_tp) \
+#define _EG_VARS_RESET(_tp) \
 	{ \
-	switch (_tp->type) \
+	switch (EG_TYPE(_tp)) \
 		{ \
 		case EG_IS_STRING: \
-			if (_tp->_alloc) eg_eallocate(_tp->sval,0); \
-			_tp->sval=NULL; \
-			_tp->slen=0; \
-			_tp->_alloc=0; \
+			if (_EG_IS_ALLOC(_tp)) EG_EALLOCATE(EG_STRVAL(_tp),0); \
+			EG_STRLEN(_tp)=0; \
+			_EG_IS_ALLOC(_tp)=0; \
 			break; \
 		case EG_IS_ARRAY: \
-			if (_tp->_alloc) eg_array_efree(_tp->aval); \
-			_tp->aval=NULL; \
-			_tp->_alloc=0; \
+			if (_EG_IS_ALLOC(_tp)) eg_array_efree(EG_ARRVAL(_tp)); \
+			EG_ARRVAL(_tp)=NULL; \
+			_EG_IS_ALLOC(_tp)=0; \
+			break; \
+		case EG_IS_ZVAL: \
+			if (_EG_IS_ALLOC(_tp)) zval_ptr_dtor(&(_EG_ZVAL(_tp))); \
+			_EG_ZVAL(_tp)=NULL; \
+			_EG_IS_ALLOC(_tp)=0; \
 			break; \
 		} \
-	_EG_FUNC_TYPE_SET_TYPE(_tp,EG_IS_NULL) \
+	_EG_VARS_SET_TYPE(_tp,EG_IS_NULL) \
 	}
 
-#define _EG_FUNC_TYPE_NULL(_tp)
+#define _EG_VARS_NULL(_tp)
 
-#define   _EG_FUNC_TYPE_BOOL(_tp,val) { _EG_FUNC_TYPE_SET_TYPE(_tp,EG_IS_BOOL); _tp->bval=(eg_bool)(val); }
+#define _EG_VARS_BOOL(_tp,val) { _EG_VARS_SET_TYPE(_tp,EG_IS_BOOL); EG_BVAL(_tp)=(eg_bool)(val); }
 
-#define _EG_FUNC_TYPE_FALSE(_tp) _EG_FUNC_TYPE_BOOL(_tp,EG_FALSE)
-#define  _EG_FUNC_TYPE_TRUE(_tp) _EG_FUNC_TYPE_BOOL(_tp,EG_TRUE)
+#define _EG_VARS_FALSE(_tp) _EG_VARS_BOOL(_tp,EG_FALSE)
+#define _EG_VARS_TRUE(_tp) _EG_VARS_BOOL(_tp,EG_TRUE)
 
-#define    _EG_FUNC_TYPE_INT(_tp,val) { _EG_FUNC_TYPE_SET_TYPE(_tp,EG_IS_INT); _tp->ival=(eg_int)(val); }
-#define _EG_FUNC_TYPE_FLOAT(_tp,val) { _EG_FUNC_TYPE_SET_TYPE(_tp,EG_IS_FLOAT); _tp->fval=(eg_float)(val); }
+#define _EG_VARS_INT(_tp,val) { _EG_VARS_SET_TYPE(_tp,EG_IS_INT); EG_IVAL(_tp)=(eg_int)(val); }
+#define _EG_VARS_FLOAT(_tp,val) { _EG_VARS_SET_TYPE(_tp,EG_IS_FLOAT); EG_FVAL(_tp)=(eg_float)(val); }
 
 /* (len) must be referenced only once (can be strlen()) */ \
-#define _EG_FUNC_TYPE_STRINGL(_tp, str, len, dup) \
+#define _EG_VARS_STRINGL(_tp, str, len, dup) \
 	{ \
-	_tp->slen = (eg_str_len)len; \
-	_tp->sval = (eg_str_val)((dup) ? eg_eduplicate(str,_tp->slen+1) : (str)); \
-	_EG_FUNC_TYPE_SET_TYPE(_tp,EG_IS_STRING); \
-	_tp->_alloc=dup; \
+	EG_STRLEN(_tp) = (eg_size)len; \
+	EG_STRVAL(_tp) = (eg_string)((dup) ? eg_eduplicate(str,EG_STRLEN(_tp)+1) : (str)); \
+	_EG_VARS_SET_TYPE(_tp,EG_IS_STRING); \
+	_EG_IS_ALLOC(_tp)=dup; \
 	}
 
-#define _EG_FUNC_TYPE_STRING(_tp,str,dup) _EG_FUNC_TYPE_STRINGL(_tp,str,strlen(str),dup)
+#define _EG_VARS_STRING(_tp,str,dup) _EG_VARS_STRINGL(_tp,str,strlen(str),dup)
 
-#define _EG_FUNC_TYPE_ARRAY(_tp,val,dup) \
+#define _EG_VARS_ARRAY(_tp,val,dup) \
 	{ \
-	_tp->aval=((dup) ? _eg_zval_array_duplicate(val) : (val)); \
-	_EG_FUNC_TYPE_SET_TYPE(_tp,EG_IS_ARRAY); \
-	_tp->_alloc=dup; \
+	EG_ARRVAL(_tp)=((dup) ? _eg_zval_array_duplicate(val) : (val)); \
+	_EG_VARS_SET_TYPE(_tp,EG_IS_ARRAY); \
+	_EG_IS_ALLOC(_tp)=dup; \
 	}
 
-/* EG_FUNC_RETVAL_xx */
+#define _EG_VARS_RESOURCE(_tp,_res) \
+	{ \
+	EG_RESOURCE(_tp)=(eg_resource)_res; \
+	_EG_VARS_SET_TYPE(_tp,EG_IS_RESOURCE); \
+	}
+
+#define _EG_VARS_ZVAL(_tp,zp) \
+	{ \
+	_EG_ZVAL(_tp)=zp; \
+	_EG_VARS_SET_TYPE(_tp,EG_IS_ZVAL); \
+	}
+
+/* _EG_RETVAL_xx */
 
 typedef struct
 	{
 	int isset;
-	_EG_FUNC_TYPE_VARS
-	} _EG_FUNC_RETVAL;
+	_EG_VARS
+	} _EG_RETVAL;
 
-#define _EG_FUNC_RETVAL_INIT(_rp) { (_rp)->isset=0; _EG_FUNC_TYPE_INIT(_rp); }
+#define _EG_RETVAL_INIT(_rp) { (_rp)->isset=0; _EG_VARS_INIT(_rp); }
 
-#define EG_FUNC_RETVAL_NULL()					{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_NULL(_eg_retval); _eg_retval->isset=1; } }
-#define EG_FUNC_RETVAL_BOOL(val)				{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_BOOL(_eg_retval,val); _eg_retval->isset=1; } }
-#define EG_FUNC_RETVAL_FALSE()  				{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_FALSE(_eg_retval); _eg_retval->isset=1; } }
-#define EG_FUNC_RETVAL_TRUE()   				{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_TRUE(_eg_retval); _eg_retval->isset=1; } }
-#define EG_FUNC_RETVAL_INT(val) 				{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_INT(_eg_retval,val); _eg_retval->isset=1; } }
-#define EG_FUNC_RETVAL_FLOAT(val)				{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_FLOAT(_eg_retval,val); _eg_retval->isset=1; } }
-#define EG_FUNC_RETVAL_STRINGL(str, len, dup)	{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_STRINGL(_eg_retval,str, len, dup); _eg_retval->isset=1; } }
-#define EG_FUNC_RETVAL_STRING(str, dup)			{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_STRING(_eg_retval,str, dup); _eg_retval->isset=1; } }
-#define EG_FUNC_RETVAL_ARRAY(val,dup)			{ if (!(_eg_retval->isset)) { _EG_FUNC_TYPE_ARRAY(_eg_retval,val,dup); _eg_retval->isset=1; } }
+#define EG_RETVAL_NULL()				{ if (!(_eg_retval->isset)) { _EG_VARS_NULL(_eg_retval); _eg_retval->isset=1; } }
+#define EG_RETVAL_BOOL(val)				{ if (!(_eg_retval->isset)) { _EG_VARS_BOOL(_eg_retval,val); _eg_retval->isset=1; } }
+#define EG_RETVAL_FALSE()  				{ if (!(_eg_retval->isset)) { _EG_VARS_FALSE(_eg_retval); _eg_retval->isset=1; } }
+#define EG_RETVAL_TRUE()   				{ if (!(_eg_retval->isset)) { _EG_VARS_TRUE(_eg_retval); _eg_retval->isset=1; } }
+#define EG_RETVAL_INT(val) 				{ if (!(_eg_retval->isset)) { _EG_VARS_INT(_eg_retval,val); _eg_retval->isset=1; } }
+#define EG_RETVAL_FLOAT(val)			{ if (!(_eg_retval->isset)) { _EG_VARS_FLOAT(_eg_retval,val); _eg_retval->isset=1; } }
+#define EG_RETVAL_STRINGL(str, len, dup) { if (!(_eg_retval->isset)) { _EG_VARS_STRINGL(_eg_retval,str, len, dup); _eg_retval->isset=1; } }
+#define EG_RETVAL_STRING(str, dup)		{ if (!(_eg_retval->isset)) { _EG_VARS_STRING(_eg_retval,str, dup); _eg_retval->isset=1; } }
+#define EG_RETVAL_ARRAY(val,dup)		{ if (!(_eg_retval->isset)) { _EG_VARS_ARRAY(_eg_retval,val,dup); _eg_retval->isset=1; } }
+#define EG_RETVAL_RESOURCE(res)			{ if (!(_eg_retval->isset)) { _EG_VARS_RESOURCE(_eg_retval,res); _eg_retval->isset=1; } }
+#define EG_RETVAL_ZVAL(zp) 				{ if (!(_eg_retval->isset)) { _EG_VARS_ZVAL(_eg_retval,zp); _eg_retval->isset=1; } }
 
-/* EG_FUNC_RETURN_xx */
+/* _EG_RETURN_xx */
 
-#define EG_FUNC_RETURN_NULL()				{ EG_FUNC_RETVAL_NULL(); return; }
-#define EG_FUNC_RETURN_BOOL(val)			{ EG_FUNC_RETVAL_BOOL(val); return; }
-#define EG_FUNC_RETURN_FALSE()				{ EG_FUNC_RETVAL_FALSE(); return; }
-#define EG_FUNC_RETURN_TRUE()				{ EG_FUNC_RETVAL_TRUE(); return; }
-#define EG_FUNC_RETURN_INT(val)				{ EG_FUNC_RETVAL_INT(val); return; }
-#define EG_FUNC_RETURN_FLOAT(val)			{ EG_FUNC_RETVAL_FLOAT(val); return; }
-#define EG_FUNC_RETURN_STRINGL(str,len,dup)	{ EG_FUNC_RETVAL_STRINGL(str,len,dup); return; }
-#define EG_FUNC_RETURN_STRING(str,dup)		{ EG_FUNC_RETVAL_STRING(str,dup); return; }
-#define EG_FUNC_RETURN_ARRAY(val,dup)		{ EG_FUNC_RETVAL_ARRAY(val,dup); return; }
+#define EG_RETURN_NULL()				{ EG_RETVAL_NULL(); return; }
+#define EG_RETURN_BOOL(val)				{ EG_RETVAL_BOOL(val); return; }
+#define EG_RETURN_FALSE()				{ EG_RETVAL_FALSE(); return; }
+#define EG_RETURN_TRUE()				{ EG_RETVAL_TRUE(); return; }
+#define EG_RETURN_INT(val)				{ EG_RETVAL_INT(val); return; }
+#define EG_RETURN_FLOAT(val)			{ EG_RETVAL_FLOAT(val); return; }
+#define EG_RETURN_STRINGL(str,len,dup)	{ EG_RETVAL_STRINGL(str,len,dup); return; }
+#define EG_RETURN_STRING(str,dup)		{ EG_RETVAL_STRING(str,dup); return; }
+#define EG_RETURN_ARRAY(val,dup)		{ EG_RETVAL_ARRAY(val,dup); return; }
+#define EG_RETURN_RESOURCE(res)			{ EG_RETVAL_RESOURCE(res); return; }
+#define EG_RETURN_ZVAL(zp)				{ EG_RETVAL_ZVAL(zp); return; }
 
-/* EG_FUNC_ARG_xx */
+/* _EG_ARG_xx */
 
 typedef struct
 	{
 	eg_bool is_unset;
 	eg_bool _writable;
 	eg_bool _written;
-	_EG_FUNC_TYPE_VARS
-	} _EG_FUNC_ARGUMENT;
+	_EG_VARS
+	} EG_ARGUMENT;
 
 typedef struct
 	{
-	zval *zp;
-	_EG_FUNC_ARGUMENT i;
-	} _EG_FUNC_EXTERNAL_ARGUMENT;
+	zval *zp;	/* Input zval */
+	EG_ARGUMENT i;
+	} _EG_EXTERNAL_ARGUMENT;
 
-#define _EG_FUNC_ARG_RESET_TO_WRITE(argp)	{ _EG_FUNC_TYPE_RESET(argp); argp->_written=1; }
+#define EG_ARG_IS_UNSET(argp)	(argp->is_unset)
+#define EG_ARG_IS_SET(argp)	(! (argp->is_unset))
 
-#define EG_FUNC_ARG_NULL(argp)				   	{ if (argp->_writable) { _EG_FUNC_ARG_RESET_TO_WRITE(argp); } }
-#define EG_FUNC_ARG_BOOL(argp,val)			   	{ if (argp->_writable) { _EG_FUNC_ARG_RESET_TO_WRITE(argp); _EG_FUNC_TYPE_BOOL(argp,val); } }
-#define EG_FUNC_ARG_FALSE(argp)  			    { if (argp->_writable) { _EG_FUNC_ARG_RESET_TO_WRITE(argp); _EG_FUNC_TYPE_FALSE(argp); } }
-#define EG_FUNC_ARG_TRUE(argp)   			   	{ if (argp->_writable) { _EG_FUNC_ARG_RESET_TO_WRITE(argp); _EG_FUNC_TYPE_TRUE(argp); } }
-#define EG_FUNC_ARG_INT(argp,val) 			    { if (argp->_writable) { _EG_FUNC_ARG_RESET_TO_WRITE(argp); _EG_FUNC_TYPE_INT(argp,val); } }
-#define EG_FUNC_ARG_FLOAT(argp,val)				{ if (argp->_writable) { _EG_FUNC_ARG_RESET_TO_WRITE(argp); _EG_FUNC_TYPE_FLOAT(argp,val); } }
-#define EG_FUNC_ARG_STRINGL(argp,str, len, dup) { if (argp->_writable) { _EG_FUNC_ARG_RESET_TO_WRITE(argp); _EG_FUNC_TYPE_STRINGL(argp,str, len, dup); } }
-#define EG_FUNC_ARG_STRING(argp,str, dup)	    { if (argp->_writable) { _EG_FUNC_ARG_RESET_TO_WRITE(argp); _EG_FUNC_TYPE_STRING(argp,str, dup); } }
-#define EG_FUNC_ARG_ARRAY(argp,val,dup)			{ if (argp->_writable) { _EG_FUNC_ARG_RESET_TO_WRITE(argp); _EG_FUNC_TYPE_ARRAY(argp,val,dup); } }
+#define _EG_ARG_RESET_TO_WRITE(argp)	{ _EG_VARS_RESET(argp); argp->_written=1; }
 
-#define _EG_FUNC_TYPE_TO_ZVAL(zpp,ip) { \
+#define EG_ARG_SET_NULL(argp)					{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); } }
+#define EG_ARG_SET_BOOL(argp,val)				{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_BOOL(argp,val); } }
+#define EG_ARG_SET_FALSE(argp)  				{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_FALSE(argp); } }
+#define EG_ARG_SET_TRUE(argp)   				{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_TRUE(argp); } }
+#define EG_ARG_SET_INT(argp,val) 				{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_INT(argp,val); } }
+#define EG_ARG_SET_FLOAT(argp,val)				{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_FLOAT(argp,val); } }
+#define EG_ARG_SET_STRINGL(argp,str, len, dup)	{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_STRINGL(argp,str, len, dup); } }
+#define EG_ARG_SET_STRING(argp,str, dup)		{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_STRING(argp,str, dup); } }
+#define EG_ARG_SET_ARRAY(argp,val,dup)			{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_ARRAY(argp,val,dup); } }
+#define EG_ARG_SET_RESOURCE(argp,res) 			{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_RESOURCE(argp,res); } }
+#define EG_ARG_SET_ZVAL(argp,zp)				{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_ZVAL(argp,zp); } }
+
+#define _EG_VARS_TO_ZVAL(zpp,_tp) { \
 	SEPARATE_ZVAL_IF_NOT_REF(zpp); \
 	zval_dtor(*(zpp)); \
-	switch((ip)->type) \
+	switch(EG_TYPE(_tp)) \
 		{ \
 		case EG_IS_NULL: \
 			EG_ZVAL_NULL(*(zpp)); \
 		case EG_IS_BOOL: \
-			EG_ZVAL_BOOL(*(zpp), (ip)->bval); \
+			EG_ZVAL_BOOL(*(zpp), EG_BVAL(_tp)); \
 			break; \
 		case EG_IS_INT: \
-			EG_ZVAL_INT(*(zpp), (ip)->ival); \
+			EG_ZVAL_INT(*(zpp), EG_IVAL(_tp)); \
 			break; \
 		case EG_IS_FLOAT: \
-			EG_ZVAL_FLOAT(*(zpp), (ip)->fval); \
+			EG_ZVAL_FLOAT(*(zpp), EG_FVAL(_tp)); \
 			break; \
 		case EG_IS_STRING: \
-			EG_ZVAL_STRINGL(*(zpp), (ip)->sval,(ip)->slen,0); \
+			EG_ZVAL_STRINGL(*(zpp), EG_STRVAL(_tp),EG_STRLEN(_tp),0); \
 			break; \
 		case EG_IS_ARRAY: \
-			EG_ZVAL_ARRAY(*(zpp), (ip)->aval); \
+			EG_ZVAL_ARRAY(*(zpp), EG_ARRVAL(_tp)); \
+			break; \
+		case EG_IS_RESOURCE: \
+			EG_ZVAL_RESOURCE(*(zpp), EG_RESOURCE(_tp)); \
+			break; \
+		case EG_IS_ZVAL: \
+			zval_ptr_dtor(zpp); \
+			(*zpp)=_EG_ZVAL(_tp); \
 			break; \
 		} }
+
+#define EG_ARG_RESOURCE_IS_VALID(_argp)	EG_RES_PTR(_argp)
 
 /*---------------------------------------------------------------*/
 /*---- Memory management */
 
-#define eg_eallocate(ptr, size) _eg_allocate(ptr, size, 0)
-#define eg_pallocate(ptr, size) _eg_allocate(ptr, size, 1)
+#define eg_eallocate(ptr, size) eg_allocate(ptr, size, 0)
+#define eg_pallocate(ptr, size) eg_allocate(ptr, size, 1)
 
-#define EG_PEALLOCATE(ptr,size,persistent) { ptr=_eg_allocate(ptr, size, persistent); }
+#define EG_PEALLOCATE(ptr,size,persistent) { ptr=eg_allocate(ptr, size, persistent); }
 #define EG_EALLOCATE(ptr, size)	EG_PEALLOCATE(ptr, size, 0)
 #define EG_PALLOCATE(ptr, size)	EG_PEALLOCATE(ptr, size, 1)
 #define EG_EFREE(ptr)			EG_EALLOCATE(ptr, 0)
 #define EG_PFREE(ptr)			EG_PALLOCATE(ptr, 0)
 
-#define eg_eduplicate(ptr, size) _eg_duplicate(ptr, size, 0)
-#define eg_pduplicate(ptr, size) _eg_duplicate(ptr, size, 1)
+#define eg_eduplicate(ptr, size) eg_duplicate(ptr, size, 0)
+#define eg_pduplicate(ptr, size) eg_duplicate(ptr, size, 1)
 
 /*---------------------------------------------------------------*/
 /*--- Fixed value zvals */
@@ -253,8 +313,6 @@ typedef struct {
 
 #define EG_HKEY_EXISTS(ht,name) \
 	zend_hash_quick_exists(ht,EG_HKEY_STRING(name), EG_HKEY_LEN(name), EG_HKEY_HASH(name))
-
-/*--- Debug messages */
 
 /*---------------------------------------------------------------*/
 /*--- Debug messages */
@@ -414,11 +472,14 @@ typedef struct {
 #define EG_Z_ARRVAL(z)          Z_ARRVAL(z)
 #define EG_Z_ARRVAL_P(zp)       Z_ARRVAL_P(zp)
 #define EG_Z_ARRVAL_PP(zpp)     Z_ARRVAL_PP(zpp)
+#define EG_Z_RESVAL(z)          Z_RESVAL(z)
+#define EG_Z_RESVAL_P(zp)       Z_RESVAL_P(zp)
+#define EG_Z_RESVAL_PP(zpp)     Z_RESVAL_PP(zpp)
 
 #ifdef ZVAL_ARRAY
 #	define EG_ZVAL_ARRAY(zp,ht)	ZVAL_ARRAY(zp,ht)
 #else
-#	define EG_ZVAL_ARRAY(zp,ht) { Z_TYPE_P(zp)=EG_IS_ARRAY; Z_ARRVAL_P(zp)=ht; }
+#	define EG_ZVAL_ARRAY(zp,ht) { Z_TYPE_P(zp)=IS_ARRAY; Z_ARRVAL_P(zp)=ht; }
 #endif
 
 #define EG_ZVAL_NULL(zp)		ZVAL_NULL(zp)
@@ -430,6 +491,7 @@ typedef struct {
 #define EG_ZVAL_STRING(zp,val,duplicate)		ZVAL_STRING(zp,val,duplicate)
 #define EG_ZVAL_STRINGL(zp,val,len,duplicate)	ZVAL_STRINGL(zp,val,len,duplicate)
 #define EG_ZVAL_EMPTY_STRING(zp)				ZVAL_EMPTY(zp)
+#define EG_ZVAL_RESOURCE(zp,id)					ZVAL_RESOURCE(zp,id)
 
 #define EG_ZVAL_FALSE(zp)	ZVAL_FALSE(zp)
 #define EG_ZVAL_TRUE(zp)	ZVAL_TRUE(zp)
@@ -442,12 +504,13 @@ typedef struct {
 #define EG_ZVAL_IS_FLOAT(zp)	_EG_ZVAL_IS_TYPE(zp,EG_IS_FLOAT)
 #define EG_ZVAL_IS_STRING(zp)	_EG_ZVAL_IS_TYPE(zp,EG_IS_STRING)
 #define EG_ZVAL_IS_ARRAY(zp)	_EG_ZVAL_IS_TYPE(zp,EG_IS_ARRAY)
+#define EG_ZVAL_IS_RESOURCE(zp)	_EG_ZVAL_IS_TYPE(zp,EG_IS_RESOURCE)
 
-#define EG_ZVAL_ENSURE_BOOL(_zpp) { if (EG_Z_TYPE_P((*_zpp))!=EG_IS_BOOL) convert_to_boolean_ex((_zpp)); }
-#define EG_ZVAL_ENSURE_INT(_zpp) { if (EG_Z_TYPE_P((*_zpp))!=EG_IS_INT) convert_to_long_ex((_zpp)); }
-#define EG_ZVAL_ENSURE_FLOAT(_zpp) { if (EG_Z_TYPE_P((*_zpp))!=EG_IS_FLOAT) convert_to_double_ex((_zpp)); }
-#define EG_ZVAL_ENSURE_STRING(_zpp) { if (EG_Z_TYPE_P((*_zpp))!=EG_IS_STRING) convert_to_string_ex((_zpp)); }
-#define EG_ZVAL_ENSURE_ARRAY(_zpp) { if (EG_Z_TYPE_P((*_zpp))!=EG_IS_ARRAY) convert_to_array_ex((_zpp)); }
+#define EG_ZVAL_ENSURE_BOOL(_zpp) { if (EG_Z_TYPE_PP(_zpp)!=EG_IS_BOOL) convert_to_boolean_ex((_zpp)); }
+#define EG_ZVAL_ENSURE_INT(_zpp) { if (EG_Z_TYPE_PP(_zpp)!=EG_IS_INT) convert_to_long_ex((_zpp)); }
+#define EG_ZVAL_ENSURE_FLOAT(_zpp) { if (EG_Z_TYPE_PP(_zpp)!=EG_IS_FLOAT) convert_to_double_ex((_zpp)); }
+#define EG_ZVAL_ENSURE_STRING(_zpp) { if (EG_Z_TYPE_PP(_zpp)!=EG_IS_STRING) convert_to_string_ex((_zpp)); }
+#define EG_ZVAL_ENSURE_ARRAY(_zpp) { if (EG_Z_TYPE_PP(_zpp)!=EG_IS_ARRAY) convert_to_array_ex((_zpp)); }
 
 /*---------------------------------------------------------------*/
 /*--- API numbers for each minor version */
@@ -470,6 +533,8 @@ typedef struct {
 
 #define EG_IS_NUMERIC_STRING(string,str_len,intp,floatp,allow_errors,overflowp) \
 	is_numeric_string_ex(string,str_len,intp,floatp,allow_errors,overflowp)
+
+#define EG_ABS(num)	(((num) >= 0) ? (num) : -(num))
 
 /*---------------------------------------------------------------*/
 /*--- Thread-safe stuff */
@@ -501,8 +566,69 @@ typedef struct {
 #define _EG_REGISTER_STRINGL_CONSTANT(name,val,len) REGISTER_STRINGL_CONSTANT(name,val,len,CONST_CS|CONST_PERSISTENT)
 
 /*---------------------------------------------------------------*/
-/*--- extgen-specific */
+/*--- Resources */
 
+/* The variable containing the type */
+
+#define EG_RESOURCE_TYPE(_type) _eg_resource_type_ ## _type
+
+/* The data structure */
+
+#define EG_RESOURCE_STRUCT(_type) _eg_resource_struct_ ## _type
+
+/* Every resource block start with this */
+
+typedef struct {
+	int _eg_persistent;
+	eg_restype _eg_type;
+	} _eg_resource_common_data;
+
+/* Operations */
+
+#define EG_RESOURCE_ALLOC(_type,_persistent) \
+	((EG_RESOURCE_STRUCT(_type) *)_eg_resource_alloc(sizeof(EG_RESOURCE_STRUCT(_type)) \
+		,EG_RESOURCE_TYPE(_type),_persistent))
+
+/* Returns eg_resource */
+
+#define EG_RESOURCE_REGISTER(_ptr) \
+	zend_list_insert(_ptr,((_eg_resource_common_data *)_ptr)->_eg_type TSRMLS_CC)
+
+/* Returns SUCCESS/FAILURE - Arg is eg_resource */
+
+#define EG_RESOURCE_DELETE(_res) zend_list_delete(_res)
+
+/*-- Operations on persistent resources */
+
+/* Register - Block must have been allocated using EG_RESOURCE_ALLOC() */
+
+#define EG_RESOURCE_PERSISTENT_REGISTER(_ptr,_key,_keylen) \
+	_eg_resource_persistent_register(_ptr,_key,_keylen TSRMLS_CC)
+
+/* Delete - User has responsibility to ensure that persistent resource is not
+* referenced anymore. Returns SUCCESS/FAILURE */
+
+#define EG_RESOURCE_PERSISTENT_DELETE(_type,_key,_keylen) \
+	int _eg_resource_persistent_delete(EG_RESOURCE_TYPE(_type),_key,_keylen TSRMLS_CC))
+
+/* Get - Returns a pointer to struct or NULL */
+
+#define EG_RESOURCE_PERSISTENT_FIND(_type,_key,_keylen) \
+	((EG_RESOURCE_STRUCT(_type) *)_eg_resource_persistent_find(EG_RESOURCE_TYPE(_type),_key,_keylen TSRMLS_CC))
+
+/* Mandatory when returning an already-existing resource */
+
+#define EG_RESOURCE_ADDREF(res) zend_list_addref(res)
+
+/*---------------------------------------------------------------*/
+/*--- printf() formats */
+
+#define EG_FORMAT_INT		"%ld"
+#define EG_FORMAT_FLOAT		"%f"
+#define EG_FORMAT_STRING	"%s"
+#define EG_FORMAT_SIZE		"%d"
+#define EG_FORMAT_RES_TYPE	"%d"
+#define EG_FORMAT_RES_HANDLE "%d"
 
 /*---------------------------------------------------------------*/
 /*--- Miscellaneoous */
@@ -525,10 +651,14 @@ typedef struct {
 /*============================================================================*/
 /*--- Function declarations */
 
-static void *_eg_allocate(void *ptr, size_t size, int persistent);
-static void *_eg_duplicate(void *ptr, size_t size, int persistent);
+static void *eg_allocate(void *ptr, size_t size, int persistent);
+static void *eg_duplicate(void *ptr, size_t size, int persistent);
 static HashTable *_eg_zval_array_duplicate(HashTable *source_ht);
 static int _eg_extension_is_loaded(char *name TSRMLS_DC);
-static void _eg_convert_arg_zpp_to_scalar(eg_type target_type,zval **zpp,_EG_FUNC_ARGUMENT *ip);
+static void _eg_convert_arg_zpp_to_scalar(eg_type target_type,zval **zpp,EG_ARGUMENT *ip TSRMLS_DC);
+static void *_eg_resource_alloc(size_t size, eg_restype type,int persistent);
+static void _eg_resource_persistent_register(void *ptr, char *key, eg_size keylen TSRMLS_DC);
+static ZEND_RESULT_CODE _eg_resource_persistent_delete(eg_restype type, char *key, eg_size keylen TSRMLS_DC);
+static void *_eg_resource_persistent_find(eg_restype type, char *key, eg_size keylen TSRMLS_DC);
 
 /*============================================================================*/

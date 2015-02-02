@@ -2,5 +2,4 @@
 
 php-ext-gen.phk
 examples
-doc
 README.md

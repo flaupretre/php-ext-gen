@@ -59,6 +59,10 @@ $this->renderer->render_to_file('extgen.lib.twig.c','extgen.lib.c');
 
 foreach($this->functions as $func) $func->generate();
 
+/* Generate resource files */
+
+foreach($this->resources as $resource) $resource->generate();
+
 /* Expand and copy extra files */
 
 foreach($this->extra_files as $file) $file->generate();

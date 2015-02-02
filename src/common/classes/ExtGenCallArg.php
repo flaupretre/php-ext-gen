@@ -28,7 +28,9 @@ class ExtGenCallArg
 
 //----- Properties
 
-private static $scalar_types=array('bool','int','float','string');
+//TODO: resources
+
+private static $scalar_types=array('bool','int','float','string','resource');
 
 public $name;
 public $type;
@@ -38,7 +40,9 @@ public $zval=false;			// Arg is bare zval ?
 
 public $accept_array=false;
 public $accept_scalar=false;
+public $accept_resource=false;
 public $scalar_type=false;	// Scalar type
+public $resource_type=null;
 public $mixed=false;		// shortcut for (accept_array && accept_scalar)
 
 public $nullok=false;		// accept null as special case ? (array only)
@@ -66,6 +70,8 @@ $this->default=ExtGen::optional_element($def,'default');
 
 $this->type=$type=ExtGen::element($def,'type');
 
+$this->resource_type=ExtGen::optional_element($def,'resource_type');
+
 switch($type)
 	{
 	case 'zval':
@@ -73,6 +79,9 @@ switch($type)
 		if (!is_null($this->default)) throw new Exception('zval args cannot have a default value');
 		break;
 
+	case 'resource':
+		$this->accept_resource=true;
+		// No break here
 	case'bool':
 	case'int':
 	case'float':
@@ -89,6 +98,9 @@ switch($type)
 		if (!is_null($this->default)) throw new Exception('An array argument cannot have a default value');
 		break;
 
+	case 'resource':
+		$this->accept_resource=true;
+		// No break here
 	case'array|bool':
 	case'array|int':
 	case'array|float':
@@ -104,6 +116,9 @@ switch($type)
 if (!is_null($this->default))
 	$this->default=$this->func->gen->compute_immediate_value($this->scalar_type
 		,$this->default,$name);
+
+if ((!($this->accept_resource)) && (!is_null($this->resource_type)))
+	throw new Exception('Cannot set resource type on non resource');
 }
 
 //-----
