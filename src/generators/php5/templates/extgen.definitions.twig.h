@@ -56,21 +56,21 @@ typedef zend_uchar	eg_type;
 	eg_restype	rtype; \
 	int			_is_alloc;
 
-#define EG_TYPE(_tp)		(_tp)->type
+#define EG_TYPE(_tp)		((_tp)->type)
 
-#define _EG_ZVAL(_tp)		(_tp)->p.zp
-#define EG_BVAL(_tp)		(_tp)->n.bval
-#define EG_IVAL(_tp)		(_tp)->n.ival
-#define EG_FVAL(_tp)		(_tp)->n.fval
-#define EG_STRVAL(_tp)		(_tp)->p.sval
-#define EG_STRLEN(_tp)		(_tp)->n.slen
-#define EG_ARRVAL(_tp)		(_tp)->p.aval
-#define EG_RESOURCE(_tp)	EG_RES_HANDLE(_tp)
-#define EG_RES_HANDLE(_tp)	(_tp)->n.rid
-#define EG_RES_TYPE(_tp)	(_tp)->rtype
-#define EG_RES_PTR(_tp)		(_tp)->p.ptr
+#define _EG_ZVAL(_tp)		((_tp)->p.zp)
+#define EG_BVAL(_tp)		((_tp)->n.bval)
+#define EG_IVAL(_tp)		((_tp)->n.ival)
+#define EG_FVAL(_tp)		((_tp)->n.fval)
+#define EG_STRVAL(_tp)		((_tp)->p.sval)
+#define EG_STRLEN(_tp)		((_tp)->n.slen)
+#define EG_ARRVAL(_tp)		((_tp)->p.aval)
+#define EG_RESOURCE(_tp)	(EG_RES_HANDLE(_tp))
+#define EG_RES_HANDLE(_tp)	((_tp)->n.rid)
+#define EG_RES_TYPE(_tp)	((_tp)->rtype)
+#define EG_RES_PTR(_tp)		((_tp)->p.ptr)
 
-#define _EG_IS_ALLOC(_tp)	(_tp)->_is_alloc
+#define _EG_IS_ALLOC(_tp)	((_tp)->_is_alloc)
 
 /* _EG_VARS_xx */
 /* _tp is a pointer to the structure containing the _EG_VARS */
@@ -79,9 +79,6 @@ typedef zend_uchar	eg_type;
 
 #define _EG_VARS_INIT(_tp) \
 	_EG_VARS_SET_TYPE(_tp,EG_IS_NULL); \
-	_EG_ZVAL(_tp)=NULL; \
-	EG_IVAL(_tp)=0; \
-	EG_RES_TYPE(_tp)=(eg_restype)0; \
 	_EG_IS_ALLOC(_tp)=0;
 
 #define eg_array_efree(arr)	(void)zend_hash_destroy(arr)
@@ -117,7 +114,7 @@ typedef zend_uchar	eg_type;
 #define _EG_VARS_FALSE(_tp) _EG_VARS_BOOL(_tp,EG_FALSE)
 #define _EG_VARS_TRUE(_tp) _EG_VARS_BOOL(_tp,EG_TRUE)
 
-#define    _EG_VARS_INT(_tp,val) { _EG_VARS_SET_TYPE(_tp,EG_IS_INT); EG_IVAL(_tp)=(eg_int)(val); }
+#define _EG_VARS_INT(_tp,val) { _EG_VARS_SET_TYPE(_tp,EG_IS_INT); EG_IVAL(_tp)=(eg_int)(val); }
 #define _EG_VARS_FLOAT(_tp,val) { _EG_VARS_SET_TYPE(_tp,EG_IS_FLOAT); EG_FVAL(_tp)=(eg_float)(val); }
 
 /* (len) must be referenced only once (can be strlen()) */ \
@@ -140,7 +137,7 @@ typedef zend_uchar	eg_type;
 
 #define _EG_VARS_RESOURCE(_tp,_res) \
 	{ \
-	EG_RESOURCE(_tp)=(eg_resource)res; \
+	EG_RESOURCE(_tp)=(eg_resource)_res; \
 	_EG_VARS_SET_TYPE(_tp,EG_IS_RESOURCE); \
 	}
 
@@ -160,29 +157,29 @@ typedef struct
 
 #define _EG_RETVAL_INIT(_rp) { (_rp)->isset=0; _EG_VARS_INIT(_rp); }
 
-#define EG_RETVAL_NULL()					{ if (!(_eg_retval->isset)) { _EG_VARS_NULL(_eg_retval); _eg_retval->isset=1; } }
+#define EG_RETVAL_NULL()				{ if (!(_eg_retval->isset)) { _EG_VARS_NULL(_eg_retval); _eg_retval->isset=1; } }
 #define EG_RETVAL_BOOL(val)				{ if (!(_eg_retval->isset)) { _EG_VARS_BOOL(_eg_retval,val); _eg_retval->isset=1; } }
 #define EG_RETVAL_FALSE()  				{ if (!(_eg_retval->isset)) { _EG_VARS_FALSE(_eg_retval); _eg_retval->isset=1; } }
 #define EG_RETVAL_TRUE()   				{ if (!(_eg_retval->isset)) { _EG_VARS_TRUE(_eg_retval); _eg_retval->isset=1; } }
 #define EG_RETVAL_INT(val) 				{ if (!(_eg_retval->isset)) { _EG_VARS_INT(_eg_retval,val); _eg_retval->isset=1; } }
-#define EG_RETVAL_FLOAT(val)				{ if (!(_eg_retval->isset)) { _EG_VARS_FLOAT(_eg_retval,val); _eg_retval->isset=1; } }
-#define EG_RETVAL_STRINGL(str, len, dup)	{ if (!(_eg_retval->isset)) { _EG_VARS_STRINGL(_eg_retval,str, len, dup); _eg_retval->isset=1; } }
+#define EG_RETVAL_FLOAT(val)			{ if (!(_eg_retval->isset)) { _EG_VARS_FLOAT(_eg_retval,val); _eg_retval->isset=1; } }
+#define EG_RETVAL_STRINGL(str, len, dup) { if (!(_eg_retval->isset)) { _EG_VARS_STRINGL(_eg_retval,str, len, dup); _eg_retval->isset=1; } }
 #define EG_RETVAL_STRING(str, dup)		{ if (!(_eg_retval->isset)) { _EG_VARS_STRING(_eg_retval,str, dup); _eg_retval->isset=1; } }
-#define EG_RETVAL_ARRAY(val,dup)			{ if (!(_eg_retval->isset)) { _EG_VARS_ARRAY(_eg_retval,val,dup); _eg_retval->isset=1; } }
+#define EG_RETVAL_ARRAY(val,dup)		{ if (!(_eg_retval->isset)) { _EG_VARS_ARRAY(_eg_retval,val,dup); _eg_retval->isset=1; } }
 #define EG_RETVAL_RESOURCE(res)			{ if (!(_eg_retval->isset)) { _EG_VARS_RESOURCE(_eg_retval,res); _eg_retval->isset=1; } }
 #define EG_RETVAL_ZVAL(zp) 				{ if (!(_eg_retval->isset)) { _EG_VARS_ZVAL(_eg_retval,zp); _eg_retval->isset=1; } }
 
 /* _EG_RETURN_xx */
 
-#define EG_RETURN_NULL()					{ EG_RETVAL_NULL(); return; }
+#define EG_RETURN_NULL()				{ EG_RETVAL_NULL(); return; }
 #define EG_RETURN_BOOL(val)				{ EG_RETVAL_BOOL(val); return; }
-#define EG_RETURN_FALSE()					{ EG_RETVAL_FALSE(); return; }
-#define EG_RETURN_TRUE()					{ EG_RETVAL_TRUE(); return; }
+#define EG_RETURN_FALSE()				{ EG_RETVAL_FALSE(); return; }
+#define EG_RETURN_TRUE()				{ EG_RETVAL_TRUE(); return; }
 #define EG_RETURN_INT(val)				{ EG_RETVAL_INT(val); return; }
-#define EG_RETURN_FLOAT(val)				{ EG_RETVAL_FLOAT(val); return; }
+#define EG_RETURN_FLOAT(val)			{ EG_RETVAL_FLOAT(val); return; }
 #define EG_RETURN_STRINGL(str,len,dup)	{ EG_RETVAL_STRINGL(str,len,dup); return; }
-#define EG_RETURN_STRING(str,dup)			{ EG_RETVAL_STRING(str,dup); return; }
-#define EG_RETURN_ARRAY(val,dup)			{ EG_RETVAL_ARRAY(val,dup); return; }
+#define EG_RETURN_STRING(str,dup)		{ EG_RETVAL_STRING(str,dup); return; }
+#define EG_RETURN_ARRAY(val,dup)		{ EG_RETVAL_ARRAY(val,dup); return; }
 #define EG_RETURN_RESOURCE(res)			{ EG_RETVAL_RESOURCE(res); return; }
 #define EG_RETURN_ZVAL(zp)				{ EG_RETVAL_ZVAL(zp); return; }
 
@@ -212,11 +209,11 @@ typedef struct
 #define EG_ARG_SET_FALSE(argp)  				{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_FALSE(argp); } }
 #define EG_ARG_SET_TRUE(argp)   				{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_TRUE(argp); } }
 #define EG_ARG_SET_INT(argp,val) 				{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_INT(argp,val); } }
-#define EG_ARG_SET_FLOAT(argp,val)			{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_FLOAT(argp,val); } }
-#define EG_ARG_SET_STRINGL(argp,str, len, dup) { if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_STRINGL(argp,str, len, dup); } }
+#define EG_ARG_SET_FLOAT(argp,val)				{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_FLOAT(argp,val); } }
+#define EG_ARG_SET_STRINGL(argp,str, len, dup)	{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_STRINGL(argp,str, len, dup); } }
 #define EG_ARG_SET_STRING(argp,str, dup)		{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_STRING(argp,str, dup); } }
-#define EG_ARG_SET_ARRAY(argp,val,dup)		{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_ARRAY(argp,val,dup); } }
-#define EG_ARG_SET_RESOURCE(argp,res) 		{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_RESOURCE(argp,res); } }
+#define EG_ARG_SET_ARRAY(argp,val,dup)			{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_ARRAY(argp,val,dup); } }
+#define EG_ARG_SET_RESOURCE(argp,res) 			{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_RESOURCE(argp,res); } }
 #define EG_ARG_SET_ZVAL(argp,zp)				{ if (argp->_writable) { _EG_ARG_RESET_TO_WRITE(argp); _EG_VARS_ZVAL(argp,zp); } }
 
 #define _EG_VARS_TO_ZVAL(zpp,_tp) { \
@@ -249,6 +246,8 @@ typedef struct
 			(*zpp)=_EG_ZVAL(_tp); \
 			break; \
 		} }
+
+#define EG_ARG_RESOURCE_IS_VALID(_argp)	EG_RES_PTR(_argp)
 
 /*---------------------------------------------------------------*/
 /*---- Memory management */
@@ -314,8 +313,6 @@ typedef struct {
 
 #define EG_HKEY_EXISTS(ht,name) \
 	zend_hash_quick_exists(ht,EG_HKEY_STRING(name), EG_HKEY_LEN(name), EG_HKEY_HASH(name))
-
-/*--- Debug messages */
 
 /*---------------------------------------------------------------*/
 /*--- Debug messages */
@@ -579,10 +576,6 @@ typedef struct {
 
 #define EG_RESOURCE_STRUCT(_type) _eg_resource_struct_ ## _type
 
-/* The destructor base name */
-
-#define _EG_RESOURCE_DTOR_BASE(_type) _eg_resource_dtor_ ## _type
-
 /* Every resource block start with this */
 
 typedef struct {
@@ -601,25 +594,41 @@ typedef struct {
 #define EG_RESOURCE_REGISTER(_ptr) \
 	zend_list_insert(_ptr,((_eg_resource_common_data *)_ptr)->_eg_type TSRMLS_CC)
 
-/* Returns SUCCESS/FAILURE - Accepts eg_resource */
+/* Returns SUCCESS/FAILURE - Arg is eg_resource */
 
-#define EG_RESOURCE_DELETE(_res) ((_res) ? zend_list_delete(_res) : FAILURE )
+#define EG_RESOURCE_DELETE(_res) zend_list_delete(_res)
 
-/* Operations on persistent resources */
+/*-- Operations on persistent resources */
 
 /* Register - Block must have been allocated using EG_RESOURCE_ALLOC() */
 
 #define EG_RESOURCE_PERSISTENT_REGISTER(_ptr,_key,_keylen) \
 	_eg_resource_persistent_register(_ptr,_key,_keylen TSRMLS_CC)
 
+/* Delete - User has responsibility to ensure that persistent resource is not
+* referenced anymore. Returns SUCCESS/FAILURE */
+
+#define EG_RESOURCE_PERSISTENT_DELETE(_type,_key,_keylen) \
+	int _eg_resource_persistent_delete(EG_RESOURCE_TYPE(_type),_key,_keylen TSRMLS_CC))
+
 /* Get - Returns a pointer to struct or NULL */
 
 #define EG_RESOURCE_PERSISTENT_FIND(_type,_key,_keylen) \
 	((EG_RESOURCE_STRUCT(_type) *)_eg_resource_persistent_find(EG_RESOURCE_TYPE(_type),_key,_keylen TSRMLS_CC))
 
-/*TODO
-#define eg_resource_ADDREF(id) _eg_res_addref(id TSRMLS_CC)
-*/
+/* Mandatory when returning an already-existing resource */
+
+#define EG_RESOURCE_ADDREF(res) zend_list_addref(res)
+
+/*---------------------------------------------------------------*/
+/*--- printf() formats */
+
+#define EG_FORMAT_INT		"%ld"
+#define EG_FORMAT_FLOAT		"%f"
+#define EG_FORMAT_STRING	"%s"
+#define EG_FORMAT_SIZE		"%d"
+#define EG_FORMAT_RES_TYPE	"%d"
+#define EG_FORMAT_RES_HANDLE "%d"
 
 /*---------------------------------------------------------------*/
 /*--- Miscellaneoous */
@@ -649,6 +658,7 @@ static int _eg_extension_is_loaded(char *name TSRMLS_DC);
 static void _eg_convert_arg_zpp_to_scalar(eg_type target_type,zval **zpp,EG_ARGUMENT *ip TSRMLS_DC);
 static void *_eg_resource_alloc(size_t size, eg_restype type,int persistent);
 static void _eg_resource_persistent_register(void *ptr, char *key, eg_size keylen TSRMLS_DC);
+static ZEND_RESULT_CODE _eg_resource_persistent_delete(eg_restype type, char *key, eg_size keylen TSRMLS_DC);
 static void *_eg_resource_persistent_find(eg_restype type, char *key, eg_size keylen TSRMLS_DC);
 
 /*============================================================================*/

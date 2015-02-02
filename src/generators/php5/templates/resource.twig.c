@@ -13,7 +13,7 @@ eg_restype _eg_type;
 
 /* Internal destructor */
 
-static void _EG_RESOURCE_DTOR_BASE({{ resource.name }})_int(
+static void _eg_resource_dtor_{{ resource.name }}_int(
 	EG_RESOURCE_STRUCT({{ resource.name }})* ptr, int persistent)
 {
 {% block user_resource_dtor %}{% endblock %}
@@ -22,7 +22,7 @@ static void _EG_RESOURCE_DTOR_BASE({{ resource.name }})_int(
 
 /* External destructor - persistent */
 
-static void _EG_RESOURCE_DTOR({{ resource.name }})_ext_p(zend_resource_list_entry *resource)
+static void _eg_resource_dtor_{{ resource.name }}_ext_p(zend_rsrc_list_entry *resource)
 {
 EG_RESOURCE_STRUCT({{ resource.name }})* ptr;
 
@@ -30,7 +30,7 @@ if (resource && resource->ptr)
 	{
 	ptr=(EG_RESOURCE_STRUCT({{ resource.name }})*)(resource->ptr);
 	if (ptr->_eg_persistent) {
-		_EG_RESOURCE_DTOR_BASE({{ resource.name }})_int(ptr, 1);
+		_eg_resource_dtor_{{ resource.name }}_int(ptr, 1);
 		EG_PALLOCATE(resource->ptr,0);
 		}
 	}
@@ -38,13 +38,15 @@ if (resource && resource->ptr)
 
 /* External destructor - non-persistent */
 
-static void _EG_RESOURCE_DTOR({{ resource.name }})_ext_np(zend_resource_list_entry *resource)
+static void _eg_resource_dtor_{{ resource.name }}_ext_np(zend_rsrc_list_entry *resource)
 {
+EG_RESOURCE_STRUCT({{ resource.name }}) *ptr;
+
 if (resource && resource->ptr)
 	{
 	ptr=(EG_RESOURCE_STRUCT({{ resource.name }})*)(resource->ptr);
 	if (!(ptr->_eg_persistent)) {
-		_EG_RESOURCE_DTOR_BASE({{ resource.name }})_int(ptr, 0);
+		_eg_resource_dtor_{{ resource.name }}_int(ptr, 0);
 		EG_EALLOCATE(resource->ptr,0);
 		}
 	}

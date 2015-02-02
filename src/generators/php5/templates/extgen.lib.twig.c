@@ -100,7 +100,7 @@ switch(target_type)
 
 	case EG_IS_RESOURCE:
 		res=0;
-		rtype=0;
+		rtype=-1;
 		ptr=NULL;
 		if (Z_TYPE_PP(zpp)==IS_RESOURCE) {
 			res=EG_Z_RESVAL_PP(zpp);
@@ -165,16 +165,29 @@ EG_EALLOCATE(tkey,0);
 
 /*---------------*/
 
+static ZEND_RESULT_CODE _eg_resource_persistent_delete(eg_restype type, char *key, eg_size keylen TSRMLS_DC)
+{
+char *tkey;
+ZEND_RESULT_CODE status;
+
+tkey=_eg_resource_persistent_key(type,key,keylen);
+
+status=zend_hash_del(&EG(persistent_list),tkey,keylen+3);
+EG_EALLOCATE(tkey,0);
+return status;
+}
+/*---------------*/
+
 static void *_eg_resource_persistent_find(eg_restype type, char *key, eg_size keylen TSRMLS_DC)
 {
 zend_rsrc_list_entry *le;
+ZEND_RESULT_CODE status;
 char *tkey;
 
 
 tkey=_eg_resource_persistent_key(type,key,keylen);
 
-if (zend_hash_find(&EG(persistent_list),tkey,keylen+3, (void **)(&le)) == SUCCESS)
-	return le->ptr;
-
-return NULL;
+status=zend_hash_find(&EG(persistent_list),tkey,keylen+3, (void **)(&le));
+EG_EALLOCATE(tkey,0);
+return ((status==SUCCESS) ? le->ptr : NULL);
 }

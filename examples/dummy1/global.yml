@@ -24,6 +24,12 @@ extra_files:
 
 functions:
   - dummy1_func1
+  - new_subscriber
+  - subscriber_info
+  - subscriber_delete
+
+resources:
+  - subscriber
 
 constants:
   DUMMY1_CONST1:

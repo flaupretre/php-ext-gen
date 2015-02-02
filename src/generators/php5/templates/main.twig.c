@@ -186,8 +186,8 @@ REGISTER_INI_ENTRIES();
 
 {% for resource in resources %}
 	EG_RESOURCE_TYPE({{ resource.name }})=(eg_restype)zend_register_list_destructors_ex(
-		_EG_RESOURCE_DTOR({{ resource.name }})_ext_d,
-		_EG_RESOURCE_DTOR({{ resource.name }})_ext_p,
+		_eg_resource_dtor_{{ resource.name }}_ext_np,
+		_eg_resource_dtor_{{ resource.name }}_ext_p,
 		"{{ resource.display_string }}",
 		module_number);
 {% endfor %}

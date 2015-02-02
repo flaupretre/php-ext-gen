@@ -60,9 +60,17 @@ else /*--- Arg was set */
 		{% else %} {# Array not accepted -> scalar only #}
 			_eg_convert_arg_zpp_to_scalar(EG_IS_{{ arg.scalar_type|upper }},zpp,ip);
 		{% endif %} {# accept_array #}
-		{% if (arg.scalar_type == 'resource') %}
-			/* TODO: check resource_type against arg.resource_type if not null */
-		{% endif %} {# scalar_type == resource #}
+		{% if (arg.accept_resource and (arg.resource_type is not null)) %}
+			/* Check resource type against defined resource_type */
+			if (EG_TYPE(ip)==EG_IS_RESOURCE) {
+				if (EG_RES_TYPE(ip) != EG_RESOURCE_TYPE({{ arg.resource_type }})) {
+					/* Invalidate resource */
+					EG_RESOURCE(ip)=(eg_resource)0;
+					EG_RES_TYPE(ip)=-1;
+					EG_RES_PTR(ip)=NULL;
+					}
+				}
+		{% endif %} {# Resource type check #}
 {% if arg.nullok %}
 		}
 	else
