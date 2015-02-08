@@ -1,6 +1,10 @@
 # dummy1 extension main definition file
 # This is a dummy extension to test php-ext-gen
 
+# This is an example of using Yaml macros :
+# '<name>' means that the value is the constant's name (defined in an external
+# header file).
+
 macros:
   const-int: &int-named-const
     type: int
@@ -14,9 +18,6 @@ macros:
 name: dummy1
 
 version: 0.0.1
-
-autoconf:
-#TODO
 
 extra_files:
   extra.c:
@@ -32,7 +33,7 @@ resources:
   - subscriber
 
 constants:
-  DUMMY1_CONST1:
+  DUMMY1_CONST:
     <<: *int-named-const
   DUMMY1_COLOR:
     <<: *string-named-const
