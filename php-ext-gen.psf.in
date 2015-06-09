@@ -5,7 +5,7 @@ set flags # -s -c gzip
 
 #-----
 
-add $(flags) -C src  .
+add $(flags) -C src .
 
 #-- External libraries
 #<TODO> For stable releases, it would be cleaner to replace this with
@@ -13,16 +13,16 @@ add $(flags) -C src  .
 
 # Phool
 
-add $(flags) -t submodules/phool -C submodules/phool/src .
+add $(flags) -C external/phool src
 
 # Yaml
 
-add $(flags) -b submodules/Yaml -C submodules/Yaml Exception Dumper.php Escaper.php \
+add $(flags) -b src/Yaml -C submodules/Yaml Exception Dumper.php Escaper.php \
 	Inline.php Parser.php Unescaper.php Yaml.php
 
 # Twig
 
-add $(flags) -t submodules/twig -C submodules/twig/lib/Twig .
+add $(flags) -t src/Twig -C submodules/twig/lib/Twig .
 
 #---------------------------------------------------------------------
 %options
