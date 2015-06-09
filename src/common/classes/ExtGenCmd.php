@@ -66,7 +66,7 @@ More information at <TODO>\n\n";
 public static function run($args)
 {
 $op=new ExtGenCmdOptions;
-$op->parse_all($args);
+$op->parseAll($args);
 $action=(count($args)) ? array_shift($args) : 'help';
 
 switch($action)

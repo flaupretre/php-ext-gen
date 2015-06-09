@@ -34,7 +34,7 @@ abstract public function generate();
 
 public function __construct($gen,$name)
 {
-PHO_Display::trace("Defining function $name");
+\Phool\Display::trace("Defining function $name");
 
 $this->gen=$gen;
 $this->name=$name;
@@ -68,7 +68,7 @@ $seen_optional=false;
 $class=$this->gen->getclass('CallArg');
 foreach($argsdef as $argname => $argdef)
 	{
-	PHO_Display::trace("Defining argument $argname");
+	\Phool\Display::trace("Defining argument $argname");
 	if (array_key_exists($argname,$this->arguments))
 		throw new Exception("$argname: Argument already defined");
 	try { $obj=new $class($this,$argname,$argdef); }

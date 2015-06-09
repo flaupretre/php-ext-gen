@@ -46,7 +46,7 @@ foreach($this->extra_files as $file) $file->prepare();
 
 public function generate()
 {
-PHO_Display::info('Generating...');
+\Phool\Display::info('Generating...');
 
 /* Transfer common files */
 

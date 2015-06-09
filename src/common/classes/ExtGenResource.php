@@ -34,7 +34,7 @@ abstract public function generate();
 
 public function __construct($gen,$name)
 {
-PHO_Display::trace("Defining resource $name");
+\Phool\Display::trace("Defining resource $name");
 
 $this->gen=$gen;
 $this->name=$name;

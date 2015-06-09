@@ -11,7 +11,7 @@
 
 //-------------
 
-class ExtGenCmdOptions extends PHO_Options
+class ExtGenCmdOptions extends \Phool\Options\Base
 {
 
 // Short/long modifier args
@@ -36,16 +36,16 @@ protected $options=array(
 
 //-----------------------
 
-protected function process_option($opt,$arg)
+protected function processOption($opt,$arg)
 {
 switch($opt)
 	{
 	case 'v':
-		PHO_Display::inc_verbose();
+		\Phool\Display::incVerbose();
 		break;
 
 	case 'q':
-		PHO_Display::dec_verbose();
+		\Phool\Display::decVerbose();
 		break;
 
 	case 'f':

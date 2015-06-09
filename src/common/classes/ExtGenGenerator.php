@@ -104,11 +104,11 @@ $gen_class='ExtGenGenerator'.strtoupper($generator);
 if (!class_exists($gen_class,1))
 	throw new Exception("$generator: this generator is not available yet");
 
-PHO_Display::trace("Using $generator generator");
+\Phool\Display::trace("Using $generator generator");
 
 $obj=new $gen_class();
 
-PHO_Display::trace("Generating for (engine=$engine ; version=$version)");
+\Phool\Display::trace("Generating for (engine=$engine ; version=$version)");
 
 $obj->generator=$generator;
 $obj->options=new ExtGenOptions($options);
@@ -170,7 +170,7 @@ return $class;
 
 public function read_source_data()
 {
-PHO_Display::info('Reading source files...');
+\Phool\Display::info('Reading source files...');
 
 // Read data from global definition file
 
